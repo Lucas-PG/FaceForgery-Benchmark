@@ -8,14 +8,12 @@
 \title{Explaining Spatial and Spectral Face Forgery Detectors:\\Controlled Comparisons and Shared Failure Analysis}
 \author{Lucas Cunha \quad Lucas Sotomaior \quad Lucas Gasperin\\Beatriz Caldas \quad Eduardo Pianovski \quad Rayson Laroca\\Pontifical Catholic University of Paran\'{a}, Curitiba, Brazil}
 \iclrfinalcopy
-\makeatletter
-\def\iclr@conference{Pre-execution research revision, 11 September 2026; not submitted}
-\makeatother
 \newcommand{\AUC}{\operatorname{AUC}}
 \newcommand{\BA}{\operatorname{BA}}
 \newcommand{\ind}{\mathbb{1}}
 \begin{document}
 \maketitle
+\lhead{Pre-execution research revision, 11 September 2026; not submitted}
 
 \begin{abstract}
 Strong face-forgery detection scores do not identify the visual evidence a detector uses or explain why different architectures fail on the same image. We extend a spatial--spectral MFFI benchmark with three controlled explainability protocols: a reproducible 64-image cohort shared across architectures, matched RGB--frequency comparisons in native coordinates, and complete-roster shared-error analysis with label-matched controls. The implementation supports twelve attribution and perturbation methods, freezes validation-selected thresholds and explanation targets, preserves checkpoint and image provenance, and records numerical diagnostics alongside raw maps. The earlier benchmark reports a clean-to-degraded ROC-AUC change from 0.884 to 0.609 for RGB Xception and from 0.809 to 0.726 for its frozen DINOv3 configuration. These previously reported results motivate, but do not establish, hypotheses about localized shortcuts, complementary spectral evidence, and shared vulnerabilities. We distinguish spatial location from frequency index, attribution agreement from causal evidence, and a balanced diagnostic sample from a representative population sample. This revision delivers the methodology, implementation, and evidence-grounded interpretation before execution of the new image experiments; it does not report newly observed heatmaps, new detector performance, or demographic effects.
