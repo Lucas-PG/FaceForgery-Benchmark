@@ -264,6 +264,6 @@ def perturbation_curves(model: nn.Module, x: torch.Tensor, baseline: torch.Tenso
                 deletion.append(float(FakeMargin(model)(torch.where(selected, baseline, x)).item()))
                 insertion.append(float(FakeMargin(model)(torch.where(selected, x, baseline)).item()))
             out[name] = {"deletion": deletion, "insertion": insertion,
-                         "deletion_auc": float(np.trapz(deletion, fractions)),
-                         "insertion_auc": float(np.trapz(insertion, fractions))}
+                         "deletion_auc": float(np.trapezoid(deletion, fractions)),
+                         "insertion_auc": float(np.trapezoid(insertion, fractions))}
     return out
