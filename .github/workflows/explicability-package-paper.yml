@@ -59,7 +59,7 @@ jobs:
       - name: Preserve original and stage only verified generated manuscript files
         run: |
           python - <<'PY'
-          import hashlib, json, os, pathlib, subprocess
+          import hashlib, json, os, pathlib, re, subprocess
           source = os.environ['BUILT_COMMIT']
           original = '1643db7a82f111f1a468dba986fe29593761b6be'
           root = pathlib.Path('paper/explicability')
@@ -74,7 +74,8 @@ jobs:
                   raise ValueError(f'Manuscript source changed since this artifact was built: {name}')
               sources[name] = hash_bytes(built)
           pdf, text = (bundle/'main.pdf').read_bytes(), (bundle/'main.txt').read_text()
-          if not pdf.startswith(b'%PDF-') or 'Controlled Comparisons and Shared Failure Analysis' not in text.replace('\n',' '):
+          normalized = re.sub('[^a-z0-9]', '', text.lower())
+          if not pdf.startswith(b'%PDF-') or 'controlledcomparisonsandsharedfailureanalysis' not in normalized:
               raise ValueError('Unexpected manuscript artifact')
           archive = pathlib.Path('paper/original-sibgrapi.pdf')
           original_bytes = git_file(original, 'paper.pdf')
