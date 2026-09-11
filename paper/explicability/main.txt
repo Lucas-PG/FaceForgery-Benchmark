@@ -1,4 +1,4 @@
-Published as a conference paper at ICLR 2027
+Pre-execution research revision, 11 September 2026; not submitted
 
 
 
@@ -58,7 +58,7 @@ systems.
 
 
                                                   1
-Published as a conference paper at ICLR 2027
+Pre-execution research revision, 11 September 2026; not submitted
 
 
 
@@ -124,7 +124,7 @@ contract, not an implicit claim to cover every trained model.
 
 
                                                   2
-Published as a conference paper at ICLR 2027
+Pre-execution research revision, 11 September 2026; not submitted
 
 
 
@@ -189,7 +189,7 @@ sampling seed of 42 determines four without-replacement draws: 16 true positives
 
 
                                                    3
-Published as a conference paper at ICLR 2027
+Pre-execution research revision, 11 September 2026; not submitted
 
 
 
@@ -253,7 +253,7 @@ baseline. Curves explain sensitivity to this perturbation mechanism, not a causa
 
 
                                                    4
-Published as a conference paper at ICLR 2027
+Pre-execution research revision, 11 September 2026; not submitted
 
 
 
@@ -318,7 +318,7 @@ cause.
 
 
                                                      5
-Published as a conference paper at ICLR 2027
+Pre-execution research revision, 11 September 2026; not submitted
 
 
 
@@ -382,7 +382,7 @@ this manuscript does not substitute unaudited earlier draft counts for those gen
 
 
                                                    6
-Published as a conference paper at ICLR 2027
+Pre-execution research revision, 11 September 2026; not submitted
 
 
 
@@ -445,7 +445,7 @@ later experiment execution to supply results without changing the scientific mea
 
 
                                                    7
-Published as a conference paper at ICLR 2027
+Pre-execution research revision, 11 September 2026; not submitted
 
 
 
@@ -512,7 +512,7 @@ Scott M. Lundberg and Su-In Lee.     A unified approach to interpreting
 
 
                                                   8
-Published as a conference paper at ICLR 2027
+Pre-execution research revision, 11 September 2026; not submitted
 
 
 
@@ -571,7 +571,7 @@ uncertainty, and alternative explanations. Replace hypotheses with observed conc
 
 
                                                    9
-Published as a conference paper at ICLR 2027
+Pre-execution research revision, 11 September 2026; not submitted
 
 
 
