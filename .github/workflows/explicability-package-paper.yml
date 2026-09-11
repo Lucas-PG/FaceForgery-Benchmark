@@ -8,11 +8,11 @@ on:
       build_run_id:
         description: Successful Explicability paper build run ID
         required: true
-        default: '34619884676'
+        default: '34621541196'
       built_commit:
         description: Exact source commit used by that paper build
         required: true
-        default: 'bbd451e43b2530907d34745efaf138c29640fab9'
+        default: 'd0bd4a78b084e78b2ea537e74b840f7933e843bc'
 permissions:
   contents: read
 concurrency:
@@ -27,8 +27,8 @@ jobs:
       contents: write
       actions: read
     env:
-      BUILD_RUN: ${{ inputs.build_run_id || '34619884676' }}
-      BUILT_COMMIT: ${{ inputs.built_commit || 'bbd451e43b2530907d34745efaf138c29640fab9' }}
+      BUILD_RUN: ${{ inputs.build_run_id || '34621541196' }}
+      BUILT_COMMIT: ${{ inputs.built_commit || 'd0bd4a78b084e78b2ea537e74b840f7933e843bc' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -77,6 +77,11 @@ jobs:
           normalized = re.sub('[^a-z0-9]', '', text.lower())
           if not pdf.startswith(b'%PDF-') or 'controlledcomparisonsandsharedfailureanalysis' not in normalized:
               raise ValueError('Unexpected manuscript artifact')
+          if 'publishedasaconferencepaper' in normalized:
+              raise ValueError('Unsubmitted manuscript must not carry publication-status boilerplate')
+          first_page = re.sub('[^a-z0-9]', '', text.split('\f')[0].lower())
+          if 'preexecutionresearchrevision' not in first_page or 'notsubmitted' not in first_page:
+              raise ValueError('Missing author-review status header')
           archive = pathlib.Path('paper/original-sibgrapi.pdf')
           original_bytes = git_file(original, 'paper.pdf')
           if archive.exists() and archive.read_bytes() != original_bytes:
