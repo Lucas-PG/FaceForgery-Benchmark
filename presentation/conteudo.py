@@ -25,7 +25,7 @@ def compose(d, data):
         r(s,x,280,440,310,WHITE,radius=20)
         t(s,val,x+28,317,384,68,bold=True,color=TEAL)
         t(s,label,x+28,411,384,29,bold=True)
-        t(s,desc,x+28,479,384,25,color=MUTED)
+        t(s,desc,x+28,511,384,25,color=MUTED)
     r(s,80,645,1440,110,PALE,radius=18)
     t(s,'ROC-AUC',109,671,260,34,bold=True)
     t(s,'0,50: referência aleatória  ·  1,00: separação perfeita',403,675,1070,29)
@@ -100,7 +100,7 @@ def compose(d, data):
         r(s,x,298,440,383,WHITE,radius=22)
         t(s,label,x+30,329,380,43,color=TEAL,bold=True)
         t(s,headline,x+30,410,380,33,bold=True)
-        t(s,body,x+30,485,380,29,color=MUTED)
+        t(s,body,x+30,525,380,29,color=MUTED)
     t(s,'Comparações controladas; nenhum resultado de heatmap é antecipado.',85,742,1430,28,color=TEAL)
 
     s=sld('Tarefa 1 · As mesmas 64 imagens','PROTOCOLO · NÃO É UM RESULTADO EXPERIMENTAL','B · tarefa 1; C · configuração.',
