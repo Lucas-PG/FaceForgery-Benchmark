@@ -108,6 +108,10 @@ jobs:
           if 'publishedasaconferencepaper' in re.sub('[^a-z0-9]', '', text.lower()):
               raise ValueError('Incorrect publication-status boilerplate')
           xml = subprocess.check_output(['pdftotext','-bbox-layout',str(pdf),'-'])
+          # Some TeX math glyphs become XML-1.0-invalid control characters in
+          # Poppler's text extraction. Remove only those characters from the
+          # inspection metadata; keep every bounding box and the PDF unchanged.
+          xml = re.sub(rb'[\x00-\x08\x0b\x0c\x0e-\x1f]', b'', xml)
           doc = ET.fromstring(xml)
           ns = {'x':'http://www.w3.org/1999/xhtml'}
           layout = []
@@ -120,6 +124,7 @@ jobs:
               if min(xs) < 30 or max(xe) > 582 or min(ys) < 25 or max(ye) > 767:
                   raise ValueError('Text exceeds safe letter-page bounds')
               layout.append({'page':i,'word_count':len(words),'text_bounds_pt':[min(xs),min(ys),max(xe),max(ye)]})
+          if len(layout) != 6: raise ValueError('Could not inspect all six pages')
           data = pdf.read_bytes()
           (root/'main.tex').write_text(source)
           (root/'main.pdf').write_bytes(data)
