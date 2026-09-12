@@ -9,12 +9,12 @@ def compose(d, data):
           notes='Apresente primeiro os resultados do benchmark anterior. Em seguida, explique os três protocolos implementados para investigar as decisões dos detectores. Esta apresentação não contém heatmaps novos nem resultados inferidos como se tivessem sido medidos. Autores mantidos conforme o manuscrito fornecido; o material requer revisão da equipe.')
     t(s,'Acertar não é o\nmesmo que explicar.',80,280,950,78,bold=True)
     t(s,'Resultados do benchmark espacial–espectral\ne uma extensão para comparar explicações.',84,513,910,34,color=MUTED)
-    r(s,1110,270,410,315,PALE,radius=24)
+    r(s,1110,270,410,330,PALE,radius=24)
     t(s,'DUAS LIDERANÇAS',1140,301,350,19,color=TEAL,bold=True)
     t(s,'0,884',1140,351,350,69,bold=True)
-    t(s,'Xception · teste limpo',1140,433,350,25,color=MUTED)
-    t(s,'0,726',1140,483,180,44,color=TEAL,bold=True)
-    t(s,'DINOv3 · degradado',1140,542,350,23,color=MUTED)
+    t(s,'Xception · teste limpo',1140,445,350,25,color=MUTED)
+    t(s,'0,726',1140,493,180,44,color=TEAL,bold=True)
+    t(s,'DINOv3 · degradado',1140,556,350,23,color=MUTED)
     t(s,'Lucas Cunha · Lucas Sotomaior · Lucas Gasperin',84,677,1380,25)
     t(s,'Beatriz Caldas · Eduardo Pianovski · Rayson Laroca',84,716,1380,25)
     t(s,data['instituicao'],84,763,1380,21,color=MUTED)
@@ -129,7 +129,7 @@ def compose(d, data):
 
     s=sld('12 métodos, perguntas diferentes','IMPLEMENTAÇÃO · SUPORTE DEPENDE DA ARQUITETURA','B · tabela de métodos; D–G · base metodológica.',
           notes='Métodos agrupados pela forma predominante de análise: seis por gradientes/localização, cinco por perturbação/surrogates e um de atenção. Kernel SHAP e LIME produzem contribuições de grupos sob perturbação; Grad-CAM localiza em uma camada; IG é relativo a baseline. Attention Rollout é agnóstico à classe e não é equivalente à explicação por gradiente da margem falso-real. Nem todos os métodos são aplicáveis a todos os modelos. O número de métodos não corresponde a confirmações independentes.')
-    groups=[('GRADIENTES / LOCALIZAÇÃO',data['metodos']['Gradientes e localização']),('PERTURBAÇÃO / SURROGATES',data['metodos']['Perturbação e aproximação local']),('ATENÇÃO',data['metodos']['Atenção'])]
+    groups=[('GRADIENTES / LOCALIZAÇÃO',data['metodos']['Gradientes e localização']),('PERTURBAÇÃO / MODELOS LOCAIS',data['metodos']['Perturbação e aproximação local']),('ATENÇÃO',data['metodos']['Atenção'])]
     for i,(label,methods) in enumerate(groups):
         x=80+i*500
         r(s,x,281,440,418,WHITE,radius=20)
