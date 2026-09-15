@@ -40,7 +40,8 @@ class RandomizedRobustAugment:
         self.hflip = transforms.RandomHorizontalFlip(p=0.5)
         self.normalize = transforms.Normalize(mean=list(mean), std=list(std))
 
-    def __call__(self, img: Image.Image) -> torch.Tensor:
+    def transform_to_tensor(self, img: Image.Image) -> torch.Tensor:
+        """Aplica aumentações dinâmicas e retorna tensor [3, H, W] em [0, 1] antes da normalização."""
         # 1. Transformações espaciais base
         img = self.crop(img)
         img = self.hflip(img)
@@ -86,6 +87,10 @@ class RandomizedRobustAugment:
             sigma = random.uniform(0.01, 0.08)
             tensor = (tensor + torch.randn_like(tensor) * sigma).clamp(0.0, 1.0)
 
+        return tensor
+
+    def __call__(self, img: Image.Image) -> torch.Tensor:
+        tensor = self.transform_to_tensor(img)
         # 9. Normalização ImageNet
         return self.normalize(tensor)
 

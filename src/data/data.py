@@ -8,6 +8,8 @@ import os
 import torch
 from typing import Literal
 
+from src.data.augmentations import RandomizedRobustAugment
+
 # Cada modo define como o tensor de saída é montado a partir da imagem RGB.
 # FFT: grayscale (luminância) → fft2 → fftshift; canais de saída variam conforme o modo.
 FourierMode = Literal[
@@ -152,16 +154,18 @@ class ImageDataset(Dataset):
 
         label = self.df.iloc[idx, 1]
 
-        # Aplica augmentações de corte/flip espaciais na imagem original antes do cálculo do tensor
-        if self.spatial_augment is not None:
-            img = self.spatial_augment(img)
-
-        # O tensor base agora respeita as coordenadas e transformações exatas do domínio espacial
-        img_tensor = self.to_tensor(img)
-        if self.tensor_transform is not None:
-            image = self.tensor_transform(img)
+        # Aplica augmentações e obtém tensor base e imagem normalizada
+        if isinstance(self.transform, RandomizedRobustAugment):
+            img_tensor = self.transform.transform_to_tensor(img)
+            image = self.transform.normalize(img_tensor.clone())
         else:
-            image = self.normalize(img_tensor)
+            if self.spatial_augment is not None:
+                img = self.spatial_augment(img)
+            img_tensor = self.to_tensor(img)
+            if self.tensor_transform is not None:
+                image = self.tensor_transform(img)
+            else:
+                image = self.normalize(img_tensor)
 
         # --- Montagem do tensor conforme o modo (espacial vs. frequência vs. híbrido) ---
         if self.fourier == "none":
