@@ -1,0 +1,4 @@
+model_family,seed,regime,val_auc,test_auc,test_acc,test_f1,test_d_auc,test_d_acc,test_d_f1,df40_auc,delta_auc,elapsed_min,cached
+vit,42,finetune_robust,0.9486,0.82,0.7363,0.7468,0.7619,0.6843,0.6939,0.7257,-0.0581,596.3,False
+vit,123,finetune_robust,0.948,0.8253,0.7383,0.7465,0.7647,0.685,0.6938,0.7118,-0.0605,619.0,False
+vit,2024,finetune_robust,0.9519,0.8213,0.7332,0.7386,0.7645,0.6823,0.6852,0.7486,-0.0568,876.9,False
