@@ -129,9 +129,9 @@ class CanonicalDataset(Dataset):
         if self.training and self.recipe=="robust_v1":
             value=sample_seed(self.seed,self.epoch,row.sample_id,"degradation")
             x=corrupt(image,random.Random(value),torch.Generator().manual_seed(value))
-        image_hash=digest_file(path) if self.hash_images else ""
         expected=str(row.get("sha256",""))
-        if self.hash_images and expected and expected!=image_hash:
+        image_hash=digest_file(path) if self.hash_images or expected else ""
+        if expected and expected!=image_hash:
             raise ValueError(f"Image bytes changed: {row.sample_id}")
         return {"image":x,"clean":clean,"label":int(row.label),"index":index,
                 "sample_id":row.sample_id,"image_sha256":image_hash}

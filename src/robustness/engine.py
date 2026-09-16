@@ -15,6 +15,7 @@ from torch.utils.data import DataLoader
 from .experiments import plan
 from .imaging import CanonicalDataset
 from .inference import predict, calibrate
+from .artifacts import save_predictions
 from .manifests import load_manifest
 from .models import build_model, state_digest, supervised_loss, consistency_loss, distillation_loss
 from .provenance import SCHEMA, digest_file, write_csv, write_json
@@ -177,7 +178,7 @@ def train(config:dict, *, device='cpu', resume=False):
         best_model,_=load_pilot(root,device,require_complete=False)
         validation=predict(best_model,val_frame,config['data']['val_root'],image_size=t['image_size'],
                            device=device,batch_size=t['batch_size'],workers=t['workers'],hash_images=True)
-        write_csv(root/'validation_predictions.csv',validation)
+        save_predictions(root/'validation_predictions.csv',validation,manifest_record=val_certificate,model_sha256=digest_file(root/'best.pt'))
         # An interrupted finalization can be repeated only with an identical certificate.
         cal_path=root/'calibration.json'
         if cal_path.exists():
@@ -186,7 +187,7 @@ def train(config:dict, *, device='cpu', resume=False):
                 raise ValueError('Stale calibration during resume')
         else:
             calibrate(validation,manifest_record=val_certificate,output=cal_path,model_sha256=digest_file(root/'best.pt'))
-        files=['best.pt','last.pt','calibration.json','validation_predictions.csv','run.json','history.json']
+        files=['best.pt','last.pt','calibration.json','validation_predictions.csv','validation_predictions.csv.json','run.json','history.json']
         status={'state':'complete','run_id':frozen['run_id'],'epochs_completed':len(history),
                 'best_val_auc':best,'this_invocation_seconds':time.perf_counter()-started,
                 'artifacts':{name:digest_file(root/name) for name in files},

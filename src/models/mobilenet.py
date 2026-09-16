@@ -75,8 +75,11 @@ def unfreeze_last_blocks(model: nn.Module, last_n_blocks: int = 3) -> None:
         param.requires_grad = True
 
 
+from src.models._regime import uses_pretraining
+
+
 def build(config) -> nn.Module:
-    return mobilenet(2, config.in_channels, config.regime == "finetune",
+    return mobilenet(2, config.in_channels, uses_pretraining(config, "mobilenet"),
                      config.variant, config.dropout, config.allow_pretrained)
 
 

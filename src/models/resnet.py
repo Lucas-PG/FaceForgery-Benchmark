@@ -66,8 +66,11 @@ def unfreeze_last_blocks(model: nn.Module, train_layer3: bool = False) -> None:
         param.requires_grad = True
 
 
+from src.models._regime import uses_pretraining
+
+
 def build(config) -> nn.Module:
-    return resnet(2, config.regime == "finetune", config.architecture,
+    return resnet(2, uses_pretraining(config, "resnet"), config.architecture,
                   config.dropout, config.in_channels, config.allow_pretrained)
 
 

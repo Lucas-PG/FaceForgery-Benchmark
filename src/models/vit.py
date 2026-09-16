@@ -15,8 +15,11 @@ class ViTClassifier(nn.Module):
         self.last_attentions = output.attentions if self.capture_attentions else None
         return self.classifier(output.last_hidden_state[:, 0])
 
+from src.models._regime import uses_pretraining
+
+
 def build(config) -> nn.Module:
-    if config.regime == "scratch":
+    if not uses_pretraining(config, "vit"):
         cfg = ViTConfig(image_size=config.image_size, patch_size=config.patch_size,
             hidden_size=config.hidden_size, num_hidden_layers=config.num_hidden_layers,
             num_attention_heads=config.num_attention_heads, intermediate_size=config.hidden_size * 4,

@@ -59,6 +59,11 @@ def plan(config:dict):
     from .imaging import RECIPE, PREPROCESSING
     identity['preprocessing']=PREPROCESSING
     identity['augmentation_definition']=RECIPE if config['training']['recipe']=='robust_v1' else {'name':config['training']['recipe']}
+    if config['training']['teacher_run']:
+        from .provenance import digest_file
+        teacher = Path(config['training']['teacher_run'])
+        identity['teacher_checkpoint_sha256'] = digest_file(teacher/'best.pt')
+        identity['teacher_run_sha256'] = digest_file(teacher/'run.json')
     run_id=digest(identity)
     return {**identity,'run_id':run_id,'run_dir':str(Path(config['output_root'])/run_id[:16]),
             'split_audit':checks,'train_images':len(train),'val_images':len(val),

@@ -37,9 +37,13 @@ def main(argv=None):
     sh=commands.add_parser('shared-failures'); sh.add_argument('--predictions',nargs='+',required=True)
     sh.add_argument('--calibrations',nargs='+',required=True); sh.add_argument('--output',required=True)
     iv=commands.add_parser('inventory'); iv.add_argument('--models-root',required=True); iv.add_argument('--output',required=True)
+    from src.robustness.commands import register,run as extra_command
+    register(commands)
     args=p.parse_args(argv)
     from src.robustness.provenance import write_json
-    if args.command=='convert-manifest':
+    if args.command in {'import-predictions','calibrate-export','expand-plan','profile','export-xai','report-generators','aggregate-seeds'}:
+        result=extra_command(args)
+    elif args.command=='convert-manifest':
         from src.robustness.manifests import convert_manifest
         result=convert_manifest(args.source,args.output,dataset=args.dataset,split=args.split,label_column=args.label_column,
                                 convention=args.convention,group_column=args.group_column)
@@ -62,7 +66,8 @@ def main(argv=None):
         model,record=load_pilot(args.run,args.device)
         result=evaluate(model,args.manifest,args.root,args.output,checkpoint_path=Path(args.run)/'best.pt',
                         calibration_path=Path(args.run)/'calibration.json',image_size=record['config']['training']['image_size'],
-                        device=args.device,batch_size=args.batch_size,workers=args.workers)
+                        device=args.device,batch_size=args.batch_size,workers=args.workers,
+                        research_run={'name':record['config']['name'],'seed':record['config']['training']['seed'],'run_id':record['run_id']})
     elif args.command in {'evaluate-legacy','calibrate-legacy'}:
         import torch
         from src.pipelines.checkpoints import run_from_checkpoint,config_from_run,load_model_from_run
@@ -80,8 +85,9 @@ def main(argv=None):
                                 in_channels=config.in_channels,positive_class=args.class_one,device=args.device,
                                 batch_size=args.batch_size,workers=args.workers)
             out.mkdir(parents=True)
-            write_csv(out/'validation_predictions.csv',predictions)
-            result=calibrate(predictions,manifest_record=record,output=out/'calibration.json',model_sha256=digest_file(args.checkpoint))
+            from src.robustness.artifacts import save_predictions
+            save_predictions(out/'validation_predictions.csv',predictions,manifest_record=record,model_sha256=digest_file(args.checkpoint),checkpoint_class1=args.class_one)
+            result=calibrate(predictions,manifest_record=record,output=out/'calibration.json',model_sha256=digest_file(args.checkpoint),checkpoint_class1=args.class_one)
         else:
             model=load_model_from_run(run,torch.device(args.device))
             result=evaluate(model,args.manifest,args.root,args.output,checkpoint_path=args.checkpoint,

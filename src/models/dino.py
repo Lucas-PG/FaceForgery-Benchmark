@@ -13,11 +13,14 @@ class DINOVisionClassifier(nn.Module):
         elif features.ndim == 3: features = features[:, 0]
         return self.classifier(features)
 
+from src.models._regime import uses_pretraining
+
+
 def build(config) -> nn.Module:
     import timm
     names = {"tiny":"convnext_tiny.dinov3_lvd1689m", "small":"convnext_small.dinov3_lvd1689m",
              "base":"convnext_base.dinov3_lvd1689m", "large":"convnext_large.dinov3_lvd1689m"}
-    pretrained = config.regime == "finetune"
+    pretrained = uses_pretraining(config, "dino")
     if pretrained and not config.allow_pretrained:
         raise ValueError("External pretrained DINO weights are disabled")
     from src.data.paths import pretrained_root

@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 from .imaging import CanonicalDataset, PREPROCESSING, encode_tensor
 from .manifests import load_manifest
 from .provenance import SCHEMA, digest, digest_file, source_identity, write_csv, write_json
+from .artifacts import save_predictions
 from .statistics import aggregate_videos, choose_threshold, generator_metrics, summary, checked_predictions
 
 
@@ -39,13 +40,14 @@ def predict(model, frame, root, *, image_size:int, device="cpu", batch_size=32,
     return result
 
 
-def calibrate(predictions, *, manifest_record:dict, output:str|Path, model_sha256:str):
+def calibrate(predictions, *, manifest_record:dict, output:str|Path, model_sha256:str, checkpoint_class1:str="fake"):
+    if checkpoint_class1 not in {"fake", "real"}: raise ValueError("Invalid score orientation")
     if manifest_record["split"]!="val": raise ValueError("Threshold fitting requires source validation split=val")
     output=Path(output)
     if output.exists(): raise FileExistsError("Calibration is frozen; use a new artifact path")
     p=checked_predictions(predictions)
     record={"schema":SCHEMA,"model_sha256":model_sha256,"source_manifest_sha256":manifest_record['manifest_sha256'],
-            "selection_split":"val","label_convention":"fake-is-1","frame_threshold":choose_threshold(p.label,p.p_fake),
+            "selection_split":"val","label_convention":"fake-is-1","checkpoint_class1":checkpoint_class1,"frame_threshold":choose_threshold(p.label,p.p_fake),
             "method":"maximum validation balanced accuracy; smallest threshold tie break"}
     if "video_id" in p and p.video_id.astype(str).str.strip().ne("").all():
         videos=aggregate_videos(p)
@@ -73,13 +75,15 @@ def evaluation_report(predictions, calibration:dict, checkpoint_hash:str) -> dic
 
 
 def evaluate(model, manifest, root, output, *, checkpoint_path, calibration_path,
-             image_size:int, mode=None, in_channels=None, positive_class="fake", **kwargs):
+             image_size:int, mode=None, in_channels=None, positive_class="fake", research_run=None, **kwargs):
     output=Path(output)
     if output.exists(): raise FileExistsError("Use a new evaluation output directory; stale caches are not reused")
     frame,record=load_manifest(manifest)
     checksum=digest_file(checkpoint_path)
     calibration=json.loads(Path(calibration_path).read_text())
     # Check identities before expensive work.
+    if calibration.get('checkpoint_class1','fake')!=positive_class:
+        raise ValueError('Calibration score orientation differs from this checkpoint interpretation')
     if calibration.get('model_sha256')!=checksum or calibration.get('selection_split')!='val':
         raise ValueError("Unmatched or non-validation calibration")
     output.mkdir(parents=True)
@@ -90,11 +94,12 @@ def evaluate(model, manifest, root, output, *, checkpoint_path, calibration_path
         report=evaluation_report(p,calibration,checksum)
         report.update(schema=SCHEMA,manifest=record,checkpoint_sha256=checksum,
                       checkpoint_class1=positive_class,preprocessing=PREPROCESSING,software=source_identity())
-        write_csv(output/'predictions.csv',p)
+        if research_run is not None: report['research_run']=research_run
+        save_predictions(output/'predictions.csv',p,manifest_record=record,model_sha256=checksum,checkpoint_class1=positive_class)
         if 'video' in report: write_csv(output/'video_predictions.csv',aggregate_videos(p))
         write_json(output/'metrics.json',report)
         write_json(output/'status.json',{'state':'complete','expected':len(frame),'observed':len(p),
-                   'artifacts':{n:digest_file(output/n) for n in ['predictions.csv','metrics.json']}})
+                   'artifacts':{n:digest_file(output/n) for n in ['predictions.csv','predictions.csv.json','metrics.json']}})
         return report
     except Exception as error:
         write_json(output/'status.json',{'state':'failed','error':f'{type(error).__name__}: {error}'})

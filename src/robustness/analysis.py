@@ -4,14 +4,17 @@ import json
 from pathlib import Path
 import pandas as pd
 from .manifests import read_csv
+from .artifacts import load_predictions
 from .provenance import digest_file, write_csv, write_json
 from .statistics import align, checked_predictions, complementarity, grouped_auc_interval, summary
 
 
 def compare_files(reference,other,output,reference_calibration,other_calibration,*,draws=1000,seed=42):
-    a,b=align(read_csv(reference),read_csv(other))
     ca=json.loads(Path(reference_calibration).read_text())
     cb=json.loads(Path(other_calibration).read_text())
+    a=load_predictions(reference,calibration=ca)[0]
+    b=load_predictions(other,calibration=cb)[0]
+    a,b=align(a,b)
     if ca.get('selection_split')!='val' or cb.get('selection_split')!='val':
         raise ValueError('Comparison requires validation-frozen thresholds')
     result,cases=complementarity(a,b,reference_threshold=ca['frame_threshold'],other_threshold=cb['frame_threshold'])
@@ -31,12 +34,12 @@ def compare_files(reference,other,output,reference_calibration,other_calibration
 def shared_failures(prediction_files,calibrations,output):
     if len(prediction_files)<2 or len(prediction_files)!=len(calibrations):
         raise ValueError('Declare at least two matched predictions/calibrations')
-    reference=checked_predictions(read_csv(prediction_files[0]))
+    reference=load_predictions(prediction_files[0])[0]
     failed=reference.label.eq(reference.label).to_numpy()
     roster=[]
     for file,cal in zip(prediction_files,calibrations):
-        _,frame=align(reference,read_csv(file))
         record=json.loads(Path(cal).read_text())
+        _,frame=align(reference,load_predictions(file,calibration=record)[0])
         if record.get('selection_split')!='val': raise ValueError('Threshold must be selected on validation')
         t=record['frame_threshold']; summary(frame.label,frame.p_fake,t)
         failed &= (frame.p_fake.to_numpy()>=t) != frame.label.to_numpy()

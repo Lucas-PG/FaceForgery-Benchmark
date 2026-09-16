@@ -22,6 +22,7 @@ class TrainingConfig:
     architecture: str = "resnet18"
     fourier_mode: str = "none"
     regime: str = "scratch"
+    initialization_contract: str = "regime-v2"
     seed: int = 42
     seeds: tuple[int, ...] = (42, 123, 2024)
     epochs: int = 50
@@ -86,6 +87,8 @@ class TrainingConfig:
             raise ValueError(f"Unknown Fourier mode: {self.fourier_mode}")
         if self.regime not in {"scratch", "finetune", "scratch_robust", "finetune_robust"}:
             raise ValueError("regime must be scratch, finetune, scratch_robust, or finetune_robust")
+        if self.initialization_contract not in {"regime-v2", "legacy-v1"}:
+            raise ValueError("Unknown initialization contract")
         if self.epochs < 1 or self.batch_size < 1 or self.num_workers < 0:
             raise ValueError("epochs/batch_size must be positive and num_workers non-negative")
         if self.early_stop_patience < 1:
