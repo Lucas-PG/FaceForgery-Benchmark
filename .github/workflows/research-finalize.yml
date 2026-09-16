@@ -1,0 +1,44 @@
+name: Finalize reviewed research source
+on:
+  push:
+    branches: [robust-generalization]
+    paths: ['.github/workflows/research-finalize.yml']
+permissions:
+  contents: read
+jobs:
+  finalize:
+    if: github.repository == 'Lucas-PG/FaceForgery-Benchmark' && github.ref == 'refs/heads/robust-generalization'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Exact-context correctness refinements and source formatting
+        run: |
+          python scripts/finalize_research.py
+          python -m pip install ruff==0.12.10
+          ruff format src/robustness tests/robustness src/models/_regime.py research_cli.py scripts/prepare_celeb_df.py evaluate_celeb_df.py
+          python -m compileall -q src tests research_cli.py evaluate_celeb_df.py scripts/prepare_celeb_df.py
+          git rm -- .github/workflows/research-import.yml .github/workflows/research-maintenance.yml scripts/apply_research_fixes.py .github/workflows/research-finalize.yml scripts/finalize_research.py
+          git diff --stat
+      - name: Commit only in the fork working branch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'Lucas-PG/FaceForgery-Benchmark'
+          test "$GITHUB_REF" = 'refs/heads/robust-generalization'
+          python - <<'PY'
+          import subprocess
+          exact={'src/models/_regime.py','research_cli.py','scripts/prepare_celeb_df.py','evaluate_celeb_df.py','docs/robustness.md','START_HERE.md'}
+          changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          if any(not (n in exact or n.startswith(('src/robustness/','tests/robustness/'))) for n in changed):
+              raise RuntimeError('Unexpected finalization change')
+          subprocess.check_call(['git','add','--',*sorted(changed)])
+          PY
+          test "$(git ls-remote origin refs/heads/robust-generalization | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'refactor: finalize readable research modules and remove one-time maintenance workflows'
+          git push origin HEAD:refs/heads/robust-generalization
