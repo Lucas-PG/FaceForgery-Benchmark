@@ -48,3 +48,7 @@ Read the audit before comparing new scores. Review the canonical manifest and pr
 Historical files in `results/` remain intact as reports from their producing pipelines. Especially for Celeb-DF, robust initialization, incomplete seed tables, and test-selected ensembles, their claims must pass the audit before reuse. Statistical intervals are conditional on supplied groups and checkpoints; they do not establish causal explanations or across-seed uncertainty. Images, annotations, cache weights, and private meeting transcripts are not published by these commands.
 
 **No full-dataset training, external-dataset inference, SOTA reproduction, or new real-image XAI result is claimed by this implementation delivery.** Software verification is recorded separately in `research/robustness/VERIFICATION.md`.
+
+## New-pilot explanation entry point
+
+`src/robustness/explain.py` and [docs/pilot-xai.md](docs/pilot-xai.md) connect the new pilot models to a frozen shared cohort and primary IG/occlusion/CNN Grad-CAM analyses. The raw-input maps, per-model decisions, numerical residuals and resume checks remain distinct from the preserved legacy native-frequency pipeline.

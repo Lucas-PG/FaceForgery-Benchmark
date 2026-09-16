@@ -206,3 +206,9 @@ This measures **resident-tensor model plus internal RGB/FFT encoding**, not end-
 Use the preserved three tasks for matched clean/degraded examples, repaired/regressed cases and fixed-roster intersections. Keep the 64-image reference-stratified sample as a diagnostic sample, not a population estimate. A separate random/weighted sample is needed for population explanation summaries. Frequency bins are not facial coordinates; signed input maps and rectified CAMs are not interchangeable.
 
 See `research/robustness/PUBLICATION.md` for the results-to-paper contract. Existing six-page `paper.pdf`, ten-page reference and `/presentation` remain intact. Future observed results must be regenerated from verified artifacts, with exact dataset/protocol, exclusions, source overlap and seed counts. No script changes the primary PDF, submits a paper, publishes face images, or merges the PR automatically.
+
+## New-pilot XAI and cross-seed equivalence
+
+For new pilot checkpoint explanations, use the separate `python -m src.robustness.explain` entry point and [pilot XAI guide](pilot-xai.md). It supports fixed-cohort IG, occlusion and declared CNN-layer Grad-CAM with fresh-score checks, hashes and verified resume. Its maps are end-to-end RGB-input attributions through the FFT path, **not native-frequency maps**. The original twelve-method native-coordinate workflow remains available separately.
+
+New evaluation records include the model/training condition, source manifest hashes, preprocessing, augmentation definition and software identity. `aggregate-seeds` rejects runs with different conditions even if they share a display name. The seed is the excluded experimental factor; local output/data paths are not treated as scientific conditions. Teacher bytes may differ across seeds, so a consistent teacher-selection policy must still be reviewed. The initial backbone-state hash is recorded separately to verify paired initialization.

@@ -1,4 +1,5 @@
 """Content identities and atomic artifacts; no network or implicit overwrite."""
+
 from __future__ import annotations
 import hashlib
 import json
@@ -22,8 +23,13 @@ def digest_file(path: str | Path) -> str:
 
 
 def canonical(value: Any) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
-                      allow_nan=False).encode("utf-8")
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
 
 
 def digest(value: Any) -> str:
@@ -63,8 +69,11 @@ def atomic_bytes(path: str | Path, data: bytes) -> None:
 
 
 def write_json(path: str | Path, value: Any) -> None:
-    atomic_bytes(path, json.dumps(value, indent=2, ensure_ascii=False,
-                                 allow_nan=False).encode("utf-8") + b"\n")
+    atomic_bytes(
+        path,
+        json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False).encode("utf-8")
+        + b"\n",
+    )
 
 
 def write_csv(path: str | Path, frame) -> None:
@@ -76,15 +85,28 @@ def source_identity() -> dict:
     files = sorted((root / "src" / "robustness").glob("*.py"))
     code = {p.name: digest_file(p) for p in files}
     try:
-        commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root,
-                                         stderr=subprocess.DEVNULL, text=True).strip()
+        commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=root, stderr=subprocess.DEVNULL, text=True
+        ).strip()
     except (OSError, subprocess.CalledProcessError):
         commit = "unversioned-copy"
     packages = {}
-    for name in ("torch", "torchvision", "timm", "numpy", "pandas", "scikit-learn", "Pillow"):
+    for name in (
+        "torch",
+        "torchvision",
+        "timm",
+        "numpy",
+        "pandas",
+        "scikit-learn",
+        "Pillow",
+    ):
         try:
             packages[name] = version(name)
         except PackageNotFoundError:
             packages[name] = "not-installed"
-    return {"commit": commit, "code_sha256": code, "python": platform.python_version(),
-            "packages": packages}
+    return {
+        "commit": commit,
+        "code_sha256": code,
+        "python": platform.python_version(),
+        "packages": packages,
+    }
