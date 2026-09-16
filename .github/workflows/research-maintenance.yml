@@ -1,0 +1,42 @@
+name: Apply audited research compatibility fixes
+on:
+  push:
+    branches: [robust-generalization]
+    paths: ['.github/workflows/research-maintenance.yml']
+permissions:
+  contents: read
+jobs:
+  patch:
+    if: github.repository == 'Lucas-PG/FaceForgery-Benchmark' && github.ref == 'refs/heads/robust-generalization'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Apply exact-context patches; fail on changed source
+        run: |
+          python scripts/apply_research_fixes.py
+          python -m compileall -q src research_cli.py scripts/prepare_celeb_df.py evaluate_celeb_df.py
+          git diff --stat
+          git diff -- src/models src/pipelines/config.py src/pipelines/checkpoints.py src/data/data.py
+      - name: Commit only the reviewed compatibility fixes in the fork branch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'Lucas-PG/FaceForgery-Benchmark'
+          test "$GITHUB_REF" = 'refs/heads/robust-generalization'
+          python - <<'PY'
+          import subprocess
+          allowed={'src/models/'+n+'.py' for n in ['resnet','mobilenet','dino','xception','clip','vit']}
+          allowed.update(['src/pipelines/config.py','src/pipelines/checkpoints.py','src/data/data.py','src/robustness/imaging.py','src/robustness/experiments.py','src/robustness/inference.py','src/robustness/engine.py','src/robustness/analysis.py','research_cli.py','research/robustness/STATUS.md'])
+          changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          if not changed <= allowed: raise RuntimeError('Unexpected file changed')
+          subprocess.check_call(['git','add','--',*sorted(changed)])
+          PY
+          test "$(git ls-remote origin refs/heads/robust-generalization | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: preserve historical constructors and bind canonical prediction/calibration artifacts'
+          git push origin HEAD:refs/heads/robust-generalization
