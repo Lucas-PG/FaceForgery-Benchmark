@@ -121,6 +121,55 @@ def eval_test_d(
     return _save_results(shim, "test_d", test_d_metrics)
 
 
+def eval_df40(
+    model: nn.Module,
+    family: str,
+    fourier_mode: str,
+    regime: str,
+    seed: int,
+    output_dir: Path,
+    image_size: int,
+    batch_size: int,
+    num_workers: int,
+    device: torch.device,
+    df40_csv: Path,
+) -> dict | None:
+    """Executa a avaliação no split DF40 e grava os artefatos oficiais."""
+    results_dir = output_dir / "results"
+    if (results_dir / "metrics_df40.csv").exists() and (results_dir / "outputs_df40.npz").exists():
+        return pd.read_csv(results_dir / "metrics_df40.csv").iloc[0].to_dict()
+
+    val_metrics_csv = results_dir / "metrics_val.csv"
+    val_threshold = float(pd.read_csv(val_metrics_csv).iloc[0]["threshold"]) if val_metrics_csv.exists() else 0.5
+
+    df40_dataset = ImageDataset(
+        df40_csv,
+        Path(""),
+        transform=clean_transform(image_size),
+        fourier=fourier_mode,
+        spatial_size=(image_size, image_size),
+    )
+    df40_loader = DataLoader(
+        df40_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=device.type == "cuda",
+        persistent_workers=num_workers > 0,
+    )
+    df40_metrics = evaluate_classifier(
+        model,
+        df40_loader,
+        nn.CrossEntropyLoss(),
+        device,
+        threshold=val_threshold,
+        use_amp=device.type == "cuda",
+        desc=f"{family}/{regime}/seed_{seed} (df40)",
+    )
+    shim = RunShim(output_dir, family, fourier_mode, regime, seed, val_threshold)
+    return _save_results(shim, "df40", df40_metrics)
+
+
 def train_single_seed(
     family: str,
     seed: int,
@@ -145,6 +194,8 @@ def train_single_seed(
         m_test = pd.read_csv(output_dir / "results" / "metrics_test.csv").iloc[0].to_dict()
         m_test_d = pd.read_csv(output_dir / "results" / "metrics_test_d.csv").iloc[0].to_dict()
         m_val = pd.read_csv(output_dir / "results" / "metrics_val.csv").iloc[0].to_dict()
+        m_df40_path = output_dir / "results" / "metrics_df40.csv"
+        df40_auc = round(float(pd.read_csv(m_df40_path).iloc[0]["auc"]), 4) if m_df40_path.exists() else None
         delta_auc = m_test_d["auc"] - m_test["auc"]
         return {
             "model_family": family,
@@ -157,6 +208,7 @@ def train_single_seed(
             "test_d_auc": m_test_d["auc"],
             "test_d_acc": m_test_d["acc"],
             "test_d_f1": m_test_d["f1"],
+            "df40_auc": df40_auc,
             "delta_auc": delta_auc,
             "elapsed_min": 0.0,
             "cached": True,
@@ -268,6 +320,19 @@ def train_single_seed(
         resolved_test_d_csv,
     )
 
+    # Avaliação no DF40 se manifest existir
+    df40_csv = ROOT_DIR / "data" / "df40" / "test.csv"
+    df40_auc = None
+    if df40_csv.exists():
+        try:
+            m_df40 = eval_df40(
+                model, family, fourier_mode, regime, seed, output_dir, img_size, bs, num_workers, device, df40_csv
+            )
+            if m_df40 is not None:
+                df40_auc = round(float(m_df40["auc"]), 4)
+        except Exception as e:
+            print(f"⚠️ [DF40 Eval] Erro ao avaliar {family} seed {seed}: {e}", flush=True)
+
     elapsed_min = (time.time() - t_start) / 60
     val_metrics = pd.read_csv(output_dir / "results" / "metrics_val.csv").iloc[0].to_dict()
     delta_auc = test_d_metrics["auc"] - test_metrics["auc"]
@@ -288,6 +353,7 @@ def train_single_seed(
         "test_d_auc": round(test_d_metrics["auc"], 4),
         "test_d_acc": round(test_d_metrics["acc"], 4),
         "test_d_f1": round(test_d_metrics["f1"], 4),
+        "df40_auc": df40_auc,
         "delta_auc": round(delta_auc, 4),
         "elapsed_min": round(elapsed_min, 1),
         "cached": False,
@@ -297,6 +363,8 @@ def train_single_seed(
     print(f"   • Val AUC:    {result['val_auc']*100:.2f}%")
     print(f"   • Test AUC:   {result['test_auc']*100:.2f}% | ACC: {result['test_acc']*100:.2f}%")
     print(f"   • Test_d AUC: {result['test_d_auc']*100:.2f}% | ACC: {result['test_d_acc']*100:.2f}%")
+    if df40_auc is not None:
+        print(f"   • DF40 AUC:   {df40_auc*100:.2f}%")
     print(f"   • ΔAUC:       {result['delta_auc']*100:+.2f}% | Tempo: {result['elapsed_min']} min", flush=True)
 
     return result
@@ -315,14 +383,16 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--data-limit", type=int, default=None, help="Limite de amostras para depuração/dry-run")
     parser.add_argument("--test-d-images-dir", type=Path, default=None, help="Diretório das imagens do test_d")
     parser.add_argument("--test-d-csv", type=Path, default=None, help="CSV com anotações do test_d")
+    parser.add_argument("--device", type=str, default=None, help="Dispositivo de execução (ex: cuda:0, cuda:1, cpu)")
     parser.add_argument("--force", action="store_true", help="Reexecutar mesmo que os resultados já existam")
     args = parser.parse_args(argv)
 
     seeds = [int(s.strip()) for s in args.seeds.split(",") if s.strip()]
+    device = torch.device(args.device) if args.device else torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     print("\n" + "█" * 75)
     print(f"  BENCHMARK ROBUSTO CISIA — {args.family.upper()}")
-    print(f"  Seeds ({len(seeds)}): {seeds} | Regime: {args.regime}")
+    print(f"  Seeds ({len(seeds)}): {seeds} | Regime: {args.regime} | Device: {device}")
     print("█" * 75, flush=True)
 
     results = []
@@ -337,6 +407,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             num_workers=args.num_workers,
             early_stop_patience=args.early_stop_patience,
             data_limit=args.data_limit,
+            device=device,
             test_d_images_dir=args.test_d_images_dir,
             test_d_csv=args.test_d_csv,
             force=args.force,

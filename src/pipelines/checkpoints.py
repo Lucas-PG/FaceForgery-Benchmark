@@ -57,10 +57,11 @@ def _read_metadata(run_dir: Path) -> dict:
 
 def discover_trained_runs(root: str | Path, only_model_family: str | None = None) -> list[TrainedRun]:
     root = Path(root)
+    ALLOWED_REGIMES = {"scratch", "finetune", "scratch_robust", "finetune_robust"}
     runs = []
     for weights in sorted(root.glob("*/*/*/seed_*/weights/best.pth")):
         family, mode, regime, seed_part = weights.relative_to(root).parts[:4]
-        if family not in SUPPORTED_FAMILIES or mode not in ALL_FOURIER_MODES or regime not in {"scratch", "finetune"}:
+        if family not in SUPPORTED_FAMILIES or mode not in ALL_FOURIER_MODES or regime not in ALLOWED_REGIMES:
             continue
         if only_model_family and family != only_model_family:
             continue
@@ -82,7 +83,8 @@ def run_from_checkpoint(checkpoint: str | Path) -> TrainedRun:
         raise ValueError("Checkpoint must be a new-layout weights/best.pth file")
     run_dir = checkpoint.parent.parent
     seed_part, regime, mode, family = run_dir.name, run_dir.parent.name, run_dir.parent.parent.name, run_dir.parent.parent.parent.name
-    if family not in SUPPORTED_FAMILIES or mode not in ALL_FOURIER_MODES or regime not in {"scratch", "finetune"} or not seed_part.startswith("seed_"):
+    ALLOWED_REGIMES = {"scratch", "finetune", "scratch_robust", "finetune_robust"}
+    if family not in SUPPORTED_FAMILIES or mode not in ALL_FOURIER_MODES or regime not in ALLOWED_REGIMES or not seed_part.startswith("seed_"):
         raise ValueError("Checkpoint path does not match family/mode/regime/seed_N/weights/best.pth")
     metadata = _read_metadata(run_dir)
     return TrainedRun(family, mode, regime, int(seed_part[5:]), run_dir, checkpoint,
@@ -120,6 +122,8 @@ def _read_run_config(run: TrainedRun) -> dict:
 def config_from_run(run: TrainedRun) -> TrainingConfig:
     allowed = {field.name for field in fields(TrainingConfig)}
     raw_cfg = _read_run_config(run)
+    # Preserve unversioned historical constructors, especially Xception/CLIP/ViT.
+    raw_cfg.setdefault("initialization_contract", "legacy-v1")
     values = {
         key: _coerce(key, value) for key, value in raw_cfg.items()
         if key in allowed and not (isinstance(value, float) and np.isnan(value))

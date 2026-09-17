@@ -275,8 +275,11 @@ def xception_pretrained(
     return XceptionWithBackbone(num_classes=num_classes, dropout=dropout, in_channels=in_channels)
 
 
+from src.models._regime import uses_pretraining
+
+
 def build(config) -> nn.Module:
-    if config.regime == "finetune":
+    if uses_pretraining(config, "xception"):
         return xception_pretrained(2, config.dropout, config.allow_pretrained, config.in_channels)
     return xception(False, num_classes=2, in_channels=config.in_channels, dropout=config.dropout)
 
