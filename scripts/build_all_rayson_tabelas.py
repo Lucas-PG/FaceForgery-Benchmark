@@ -339,7 +339,7 @@ def build_tabela4():
         "**Destinatário:** Apresentação Técnica / Rayson  ",
         "**Ambiente de Execução:** Dual NVIDIA GeForce RTX 3090 (24GB) | Workstation Local (`sicret2`)  ",
         "**Sementes Canônicas Definidas (5 seeds):** `[987, 42, 123, 2024, 7]` *(aproveitando a seed 987 pré-concluída e eliminando a 2025)*  ",
-        "**Data de Extração:** 16 de Setembro de 2026  ",
+        "**Data de Extração:** 18 de Setembro de 2026  ",
         "",
         "---",
         "",
@@ -364,36 +364,33 @@ def build_tabela4():
         "| :--- | :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |",
     ]
 
-    # Compute aggregation for each model
+    # Compute aggregation for each model (using 5 canonical seeds: 987, 42, 123, 2024, 7)
+    canonical_seeds = [987, 42, 123, 2024, 7]
     agg_rows = []
     for m in FAMILIES:
         m_df = df_rob[df_rob['model'] == m]
-        n_ready = len(m_df)
+        m_df_can = m_df[m_df['seed_int'].isin(canonical_seeds)]
+        n_ready = len(m_df_can)
+        n_total_ready = len(m_df)
         
         # Status
-        if m == 'clip':
-            status = "✅ Concluído (6 seeds: 987, 42, 123, 2024, 7, 2025)"
-        elif m == 'vit':
-            status = "🔄 Em andamento: seed 7 na GPU 1 (4/5 prontas)"
-        elif m == 'dino':
-            status = "🔄 Em andamento: seed 42 na GPU 0 (1/5 pronta)"
-        elif m == 'resnet':
-            status = "⏳ Na fila GPU 0 (1/5 pronta: seed 987)"
-        elif m == 'mobilenet':
-            status = "⏳ Na fila GPU 1 (1/5 pronta: seed 987)"
-        elif m == 'xception':
-            status = "⏳ Na fila GPU 1 (1/5 pronta: seed 987)"
+        if n_ready == 5:
+            status = f"✅ Concluído (5 seeds canônicas)"
+        elif n_ready > 0:
+            status = f"🔄 Em andamento ({n_ready}/5 concluídas)"
+        else:
+            status = "⏳ Na fila"
 
-        val_auc_m = m_df['val_auc'].mean() if 'val_auc' in m_df else np.nan
-        val_auc_s = m_df['val_auc'].std() if len(m_df) > 1 else 0.0
-        test_auc_m = m_df['test_auc'].mean() if 'test_auc' in m_df else np.nan
-        test_auc_s = m_df['test_auc'].std() if len(m_df) > 1 else 0.0
-        test_d_auc_m = m_df['test_d_auc'].mean() if 'test_d_auc' in m_df else np.nan
-        test_d_auc_s = m_df['test_d_auc'].std() if len(m_df) > 1 else 0.0
-        delta_auc_m = m_df['delta_auc'].mean() if 'delta_auc' in m_df else np.nan
-        delta_auc_s = m_df['delta_auc'].std() if len(m_df) > 1 else 0.0
-        df40_auc_m = m_df['df40_auc'].mean() if 'df40_auc' in m_df else np.nan
-        df40_auc_s = m_df['df40_auc'].std() if len(m_df) > 1 else 0.0
+        val_auc_m = m_df_can['val_auc'].mean() if 'val_auc' in m_df_can else np.nan
+        val_auc_s = m_df_can['val_auc'].std() if len(m_df_can) > 1 else 0.0
+        test_auc_m = m_df_can['test_auc'].mean() if 'test_auc' in m_df_can else np.nan
+        test_auc_s = m_df_can['test_auc'].std() if len(m_df_can) > 1 else 0.0
+        test_d_auc_m = m_df_can['test_d_auc'].mean() if 'test_d_auc' in m_df_can else np.nan
+        test_d_auc_s = m_df_can['test_d_auc'].std() if len(m_df_can) > 1 else 0.0
+        delta_auc_m = m_df_can['delta_auc'].mean() if 'delta_auc' in m_df_can else np.nan
+        delta_auc_s = m_df_can['delta_auc'].std() if len(m_df_can) > 1 else 0.0
+        df40_auc_m = m_df_can['df40_auc'].mean() if 'df40_auc' in m_df_can else np.nan
+        df40_auc_s = m_df_can['df40_auc'].std() if len(m_df_can) > 1 else 0.0
 
         cf = celeb_robust[m]['frame']
         cv = celeb_robust[m]['video']
@@ -402,6 +399,7 @@ def build_tabela4():
             'model': m,
             'name': FAMILY_NAMES[m],
             'n_ready': n_ready,
+            'n_total_ready': n_total_ready,
             'status': status,
             'val_auc_m': val_auc_m, 'val_auc_s': val_auc_s,
             'test_auc_m': test_auc_m, 'test_auc_s': test_auc_s,
@@ -421,14 +419,14 @@ def build_tabela4():
         df40_str = fmt(r['df40_auc_m'], r['df40_auc_s'])
         cf_str = f"{r['celeb_frame']:.4f}"
         cv_str = f"{r['celeb_video']:.4f}"
-        lines.append(f"| **{r['name']}** | `finetune_robust` | {r['n_ready']}x | {r['status']} | {val_str} | {t_str} | {td_str} | {d_str} | {df40_str} | {cf_str} | {cv_str} |")
+        lines.append(f"| **{r['name']}** | `finetune_robust` | {r['n_ready']}/5 | {r['status']} | {val_str} | {t_str} | {td_str} | {d_str} | {df40_str} | {cf_str} | {cv_str} |")
 
     lines.extend([
         "",
         "> [!NOTE]",
-        "> **Recorte Estatístico para o CLIP:**",
-        "> - Considerando as **5 sementes canônicas** `[987, 42, 123, 2024, 7]`: Test AUC = `0.9075 ± 0.0015` | Test-D AUC = `0.8457 ± 0.0024` | $\\Delta\\text{AUC} = -0.0619$ | DF-40 AUC = `0.8155 ± 0.0144`.",
-        "> - Considerando todas as **6 sementes executadas** (incluindo seed 2025): Test AUC = `0.9074 ± 0.0014` | Test-D AUC = `0.8455 ± 0.0022` | $\\Delta\\text{AUC} = -0.0619$ | DF-40 AUC = `0.8143 ± 0.0132`.",
+        "> **Resumo dos Modelos com as 5 Sementes Canônicas Concluídas:**",
+        "> - Todas as 6 arquiteturas atingiram 5/5 sementes canônicas `[987, 42, 123, 2024, 7]` avaliadas com sucesso.",
+        "> - Adicionalmente, 5 modelos (`clip`, `dino`, `vit`, `mobilenet`, `xception`) possuem também a semente extra `2025` totalmente executada.",
         "",
         "---",
         "",
