@@ -12,18 +12,19 @@ Este documento consolida o desempenho das estratégias de combinação por agreg
 
 ## 1. Quadro Geral de Destaque dos Melhores Comitês
 
-| Tipo de Ensemble | Modelos Componentes | Estratégia | Regime | Val AUC | Test AUC (FF++) | Test-D AUC (Corrompido) | ΔAUC | DF-40 AUC | Celeb-DF Vídeo |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Ensemble Robusto 6M** | CLIP + DINO + ViT + ResNet + MobileNet + Xception | `stacking` | `finetune_robust` | **0.9988** | **0.9614** | **0.8845** | **-0.0769** | **0.8610** | **0.7940** |
-| **Ensemble Robusto 6M** | CLIP + DINO + ViT + ResNet + MobileNet + Xception | `geometric` | `finetune_robust` | 0.9981 | 0.9593 | **0.8815** | -0.0778 | 0.8610 | 0.7940 |
-| **Ensemble Robusto 2M** | CLIP Robusto + DINO Robusto | `geometric` | `finetune_robust` | 0.9982 | 0.9578 | **0.8712** | -0.0866 | 0.8492 | 0.7812 |
-| **Super-Ensemble 4M** | CLIP (RGB) + DINO (RGB) + ResNet (Freq) + ViT (Freq) | `stacking` | `híbrido` | 0.9984 | 0.9540 | **0.8610** | -0.0930 | 0.8687 | 0.7590 |
-| **Super-Ensemble 3M** | CLIP (RGB) + DINO (RGB) + ResNet (Concat Freq) | `geometric` | `híbrido` | 0.9980 | 0.9512 | **0.8580** | -0.0932 | 0.8654 | 0.7512 |
-| **Ensemble Baseline 4M** | Top 4 Híbrido (CLIP, DINO, ViT, ResNet) | `mean` | `finetune` | 0.9976 | 0.9578 | **0.7800** | -0.1778 | 0.8350 | 0.6950 |
-| **Ensemble Baseline 5M** | Top 5 Completo | `weighted` | `finetune` | 0.9975 | 0.9552 | **0.7796** | -0.1756 | 0.8310 | 0.6910 |
-| **Ensemble Baseline 3M** | Top 3 Diverso | `mean` | `finetune` | 0.9970 | 0.9570 | **0.7757** | -0.1813 | 0.8240 | 0.6880 |
-| **MoE Standard** | 7 Peritos Convolucionais com Router Dinâmico | `softmax router` | `scratch` | 0.9630 | 0.8773 | **0.6796** | -0.1976 | 0.7420 | 0.6340 |
-| **Frequency MoE** | 7 Peritos FFT Espectrais | `softmax router` | `scratch` | 0.9580 | 0.9068 | **0.6512** | -0.2556 | 0.7250 | 0.6150 |
+| Tipo de Ensemble | Modelos Componentes | Estratégia | Regime | Val AUC | Test AUC (FF++) | Test-D AUC (Corrompido) | ΔAUC | DF-40 AUC |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Super-Ensemble 30M** | 6 Arquiteturas $\times$ 5 Sementes Canônicas | `stacking` | `finetune_robust` | **0.9982** | 0.9426 | **0.8752** | -0.0674 | **0.8174** |
+| **Ensemble Robusto 2M** | CLIP + DINO (Média 5 Sementes) | `geometric` | `finetune_robust` | **0.9963** | 0.9396 | **0.8781 ± 0.0110** | -0.0615 | **0.8247 ± 0.0178** |
+| **Ensemble Robusto 2M** | CLIP + DINO (Média 5 Sementes) | `stacking` | `finetune_robust` | **0.9964** | 0.9366 | **0.8669 ± 0.0107** | -0.0698 | **0.8226 ± 0.0172** |
+| **Ensemble Robusto 3M** | CLIP + DINO + Xception (5 Sementes) | `geometric` | `finetune_robust` | **0.9952** | 0.9351 | **0.8723 ± 0.0114** | -0.0628 | **0.8108 ± 0.0174** |
+| **Ensemble Robusto 3M** | CLIP + DINO + ViT (5 Sementes) | `geometric` | `finetune_robust` | **0.9950** | 0.9352 | **0.8719 ± 0.0102** | -0.0633 | **0.8111 ± 0.0170** |
+| **Ensemble Robusto 6M** | Todos os 6 Modelos Robustos (5 Sementes) | `stacking` | `finetune_robust` | **0.9963** | 0.9341 | **0.8586 ± 0.0079** | -0.0755 | **0.8064 ± 0.0142** |
+| **Self-Ensemble CLIP** | CLIP Robusto (Fusão das 5 Sementes) | `geometric` | `finetune_robust` | **0.9890** | 0.9211 | **0.8622** | -0.0589 | **0.8432** 🚀 |
+| **Self-Ensemble DINO** | DINO Robusto (Fusão das 5 Sementes) | `geometric` | `finetune_robust` | **0.9965** | 0.9411 | **0.8653** | -0.0758 | **0.8011** |
+| **Super-Ensemble 4M** | CLIP (RGB) + DINO (RGB) + ResNet (Freq) + ViT (Freq) | `stacking` | `híbrido` | 0.9984 | 0.9540 | **0.8610** | -0.0930 | **0.8687** |
+| **Ensemble Baseline 4M** | Top 4 Híbrido (CLIP, DINO, ViT, ResNet) | `mean` | `finetune` | 0.9976 | 0.9578 | **0.7800** | -0.1778 | 0.8350 |
+| **MoE Standard** | 7 Peritos Convolucionais com Router Dinâmico | `softmax router` | `scratch` | 0.9630 | 0.8773 | **0.6796** | -0.1976 | 0.7420 |
 
 ---
 
