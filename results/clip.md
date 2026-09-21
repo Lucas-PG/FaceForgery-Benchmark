@@ -103,3 +103,36 @@ Tabela consolidada calculada sobre **5 sementes estocásticas** (42, 123, 2024, 
 | `phase` | `123` | 0.6294 | 0.5946 | 0.6484 | 0.4976 | 0.5461 | 0.6643 | -0.1318 | -0.0485 |
 | `phase` | `2024` | 0.6123 | 0.5790 | 0.6105 | 0.4997 | 0.5341 | 0.6401 | -0.1126 | -0.0449 |
 | `phase` | `2025` | 0.6258 | 0.5838 | 0.5915 | 0.4971 | 0.5335 | 0.6365 | -0.1287 | -0.0503 |
+
+
+---
+
+## 6. Regime Robusto (`finetune_robust` via RandomizedRobustAugment)
+
+> Avaliação do modelo sob treinamento com perturbações adversas estocásticas no espaço RGB espacial puro (`none`).
+
+### 6.1. Quadro Estatístico Consolidado (5 Sementes Canônicas)
+
+| Métrica | Baseline Limpo (`finetune`) | Treino Robusto (`finetune_robust`) | Salto / Variação |
+| :--- | :---: | :---: | :---: |
+| **Val AUC** | - | **0.9847 ± 0.0004** | — |
+| **Test AUC (Limpo)** | 0.9173 ± 0.0058 | **0.9075 ± 0.0015** | -0.98 pp |
+| **Test ACC (Limpo)** | - | **81.53% ± 0.44%** | — |
+| **Test F1 (Limpo)** | - | **82.10% ± 0.59%** | — |
+| **Test-D AUC (Corrompido)** | 0.7651 ± 0.0373 | **0.8457 ± 0.0024** | **+8.06 pp** 🚀 |
+| **Test-D ACC (Corrompido)** | - | **74.37% ± 0.50%** | — |
+| **Test-D F1 (Corrompido)** | - | **73.86% ± 0.79%** | — |
+| **Taxa de Degradação (ΔAUC)** | -0.1522 | **-0.0619 ± 0.0017** | Gap reduzido |
+| **DF-40 AUC (Cross-Dataset)** | 0.7639 | **0.8155 ± 0.0144** | +5.16 pp |
+| **Celeb-DF Vídeo AUC** | 0.2835 | **0.3246** | +4.11 pp |
+
+### 6.2. Detalhamento por Semente Individual (`finetune_robust`)
+
+| Semente (Seed) | Val AUC | Val ACC | Test AUC | Test ACC | Test F1 | Test-D AUC | Test-D ACC | Test-D F1 | ΔAUC | DF-40 AUC |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| `seed_7` | 0.9846 | 93.92% | 0.9068 | 80.91% | 81.33% | **0.8436** | 73.94% | 73.35% | -0.0632 | 0.7979 |
+| `seed_42` | 0.9852 | 94.02% | 0.9066 | 81.56% | 82.20% | **0.8459** | 74.65% | 74.32% | -0.0607 | 0.8160 |
+| `seed_123` | 0.9848 | 93.94% | 0.9101 | 82.08% | 82.89% | **0.8492** | 75.11% | 74.96% | -0.0609 | 0.8049 |
+| `seed_987` | 0.9850 | 93.98% | 0.9067 | 81.74% | 82.31% | **0.8462** | 73.98% | 72.98% | -0.0604 | 0.8263 |
+| `seed_2024` | 0.9840 | 94.00% | 0.9075 | 81.38% | 81.78% | **0.8434** | 74.16% | 73.71% | -0.0641 | 0.8325 |
+| `seed_2025` | 0.9838 | 93.76% | 0.9065 | 80.97% | 81.45% | **0.8446** | 73.71% | 72.89% | -0.0619 | 0.8082 |

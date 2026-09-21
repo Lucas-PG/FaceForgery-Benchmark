@@ -2,6 +2,10 @@
 
 > **Visão Geral**: Avaliação sistemática de arquiteturas combinadas por fusão probabilística, votação e empilhamento (stacking), visando maximizar a robustez e mitigar o overfitting aos artefatos de treino.
 
+> [!NOTE]
+> - Para a suíte oficial de **Ensembles Baseline** ($K=2..6$ ordenados por Val AUC), consulte [`results/mostrar_rayson/tabela2-resultados-ensemble.md`](file:///home/lucas.ocunha/tcc/results/mostrar_rayson/tabela2-resultados-ensemble.md).
+> - Para os novos **Ensembles de Modelos Robustos** com `RandomizedRobustAugment`, consulte [`results/mostrar_rayson/tabela7-ensemble-robusto.md`](file:///home/lucas.ocunha/tcc/results/mostrar_rayson/tabela7-ensemble-robusto.md).
+
 ## 1. Tabela Principal de Desempenho dos Ensembles no Teste Padrão e Teste Difícil
 
 | Ranking | ID do Ensemble | Composição | Estratégia de Fusão | Val AUC | Test AUC | Test ACC | Test F1 | Test_d AUC | Test_d ACC | Test_d F1 | Δ AUC | Score | Conceito |

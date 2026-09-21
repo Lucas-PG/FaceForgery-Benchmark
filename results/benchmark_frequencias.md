@@ -2,6 +2,9 @@
 
 Este documento reúne a análise de desempenho segmentada por cada uma das 7 formulações de entrada espectral investigadas no projeto.
 
+> [!NOTE]
+> Para a visão comparativa oficial consolidada de todos os 42 pares modelo-frequência ordenados por desempenho, consulte [`results/mostrar_rayson/tabela1-resultados-modelos-finetune.md`](file:///home/lucas.ocunha/tcc/results/mostrar_rayson/tabela1-resultados-modelos-finetune.md).
+
 ---
 
 ## Modo: RGB Espacial (none)
