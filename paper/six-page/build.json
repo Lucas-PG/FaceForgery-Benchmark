@@ -5,7 +5,7 @@
   "page_size": "612 x 792 pts (letter)",
   "format": "IEEEtran conference, two columns, 10pt, US Letter",
   "source_sha256": "9b3755698f968b745398a37f622b2a4744d3c0ec08aaa750b72b851778336961",
-  "pdf_sha256": "ff32aba19e40d14cc051977677c2c2294532e8c5b5226cbad42efee95ced8228",
+  "pdf_sha256": "ee983c7b5d0ba6e6c88e4f1f111c93f6f2a8078193ba624da8fa485766bb424c",
   "bibliography_sha256": "0da057d6c4f48a8032e256ad90dcfe9963e302ee410fce9e6375e365c57a4a48",
   "preserved_reference_sha256": {
     "paper/explicability/main.pdf": "b564b9b71acef0d2b9720eaee857d9b15b39e49134fca1f4caf8ea5e7d839238",
