@@ -1,33 +1,48 @@
-# Primary manuscript: six-page IEEE edition
+# Primary manuscript: seven-page IEEE edition
 
-The repository's authoritative manuscript is [`../../paper.pdf`](../../paper.pdf), identical to [`main.pdf`](main.pdf). It contains **exactly six pages including references** and uses the original IEEE/SIBGRAPI conference layout: two columns, 10-point body text, US Letter paper, numeric citations, and the original author/affiliation style. No reduced margins or scaled body text are used to force the page count.
+**When Robustness Does Not Transfer: Spatial and Spectral Cues for Face Forgery Detection**
 
-Edit [`main.tex`](main.tex) for this edition. The shared BibTeX database remains [`../explicability/references.bib`](../explicability/references.bib).
+The final rewritten article is [`main.pdf`](main.pdf), identical byte-for-byte to [`../../paper.pdf`](../../paper.pdf). It contains **seven total pages, including 21 references**, in the standard IEEEtran conference double-column layout, with 10-point body text and US Letter paper. No reduced margins, compressed line spacing, or scaled body text are used. The final columns are balanced typographically.
 
-The ten-page version at [`../explicability/main.pdf`](../explicability/main.pdf) and its source remain unchanged as an expanded reference. Its operational appendices are intentionally excluded from the six-page edition; all three XAI protocols, their controls, the evidence boundaries, and the cited literature remain in the primary manuscript. The original baseline PDF remains [`../original-sibgrapi.pdf`](../original-sibgrapi.pdf).
+Edit [`main.tex`](main.tex) and the article-specific [`references.bib`](references.bib). The generated tables, numerical macros, quantitative figure and underlying evidence exports are in [`generated/`](generated/). Do not manually edit generated numerical values.
 
-## Build
+## Scope and provenance
 
-From this directory, with IEEEtran and a standard TeX installation:
+The source branch was imported into the Lucas-PG fork at upstream `ICLR@d156d77897288816f6b619d577cc77d374ea0013`. The rewrite is on `paper-rewrite-20260923`; the exact imported baseline is `upstream-iclr-20260923`. All writes occurred in the fork. The supplied source/PDF/bibliography are preserved in [`../rewrite/upstream/`](../rewrite/upstream/). Earlier expanded papers and presentation assets are unchanged.
+
+This is a complete rewrite and reanalysis of existing experimental records, not a new GPU-training or full-dataset inference run. The primary comparison uses 210 standard fine-tuning records and 30 robust RGB records, with the same five seeds. Secondary ensemble summaries and the small qualitative gallery have explicitly different evidence status. See the [changes and evidence audit](../rewrite/CHANGES_AND_EVIDENCE.md).
+
+## Rebuild
+
+Use the exact source history, including the pinned upstream commit. Install the versions in [`../rewrite/build-environment.txt`](../rewrite/build-environment.txt) and a TeX installation containing IEEEtran, latexmk, recommended fonts, booktabs, microtype and balance. From the repository root:
 
 ```bash
-pdflatex -interaction=nonstopmode -halt-on-error main.tex
-bibtex main
-pdflatex -interaction=nonstopmode -halt-on-error main.tex
-pdflatex -interaction=nonstopmode -halt-on-error main.tex
-pdfinfo main.pdf
+python paper/rewrite/build_evidence.py
+cd paper/six-page
+latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
+cp main.pdf ../../paper.pdf
+cd ../..
+python paper/rewrite/verify_paper.py
 ```
 
-On Ubuntu, the required packages are `texlive-publishers`, `texlive-latex-extra`, `texlive-fonts-recommended`, and `poppler-utils`.
+On Ubuntu the TeX/system packages used were `latexmk`, `texlive-latex-extra`, `texlive-publishers`, `texlive-fonts-recommended`, and `poppler-utils`. The environment is recorded for reproducibility, not presented as a recommendation to use the latest versions.
 
-The read-only **Six-page IEEE manuscript** workflow performs the build and uploads page renders, extracted text, and logs. The separate **Package primary six-page paper** workflow verifies exactly six pages, standard IEEE class, original page dimensions, citation/layout diagnostics, source hashes, and preservation of both reference PDFs before updating the root manuscript. It writes only to `explicability` and never merges the PR. Its build-run and source-commit inputs must identify the same successful six-page build.
+The **Build rewritten IEEE paper** workflow is restricted to `Lucas-PG/FaceForgery-Benchmark:paper-rewrite-20260923`. It regenerates the evidence, compiles the paper, validates 6–8 total pages and only publishes the verified document artifacts to that working branch. It neither merges a PR nor writes to the source repository.
 
-The old long-form packaging workflow is manual and updates only the reference directory. It cannot overwrite `paper.pdf`.
+## Verification
 
-## Verification and evidence
+The final successful build is [run 35932879499](https://github.com/Lucas-PG/FaceForgery-Benchmark/actions/runs/35932879499). [`build.json`](build.json) records:
 
-[`build.json`](build.json) records the compiled edition's SHA-256 hashes, page dimensions, text bounds, fonts, page count, and preserved-reference hashes. The successful initial six-page build is [run 34695303971](https://github.com/Lucas-PG/FaceForgery-Benchmark/actions/runs/34695303971); its validated packaging is [run 34695579409](https://github.com/Lucas-PG/FaceForgery-Benchmark/actions/runs/34695579409).
+- Seven pages in the standard IEEE layout, with text bounds and font sizes checked on every page.
+- Twenty-one cited bibliography entries, no unresolved citations/references and no overfull boxes.
+- An independent `csv`/`statistics` implementation checking **126 numerical summary quantities** against the separate pandas generation path.
+- Exact primary seed identities and all 30 positive paired Test-D changes.
+- The final PDF, source, bibliography, source-data and preserved-input hashes.
 
-This is a formatting and editorial revision, not a new experiment. Previously reported results retain their attribution, and unexecuted image-dependent findings remain hypotheses. Build checks do not imply experimental validation.
+Final PDF SHA-256: `ce25b4fe90c73c0a9991e41d5956b18d01397517f559440d263cf281599056e7`.
 
-`scripts/prepare_six_page_manuscript.py` was the one-time conversion utility. It refuses to overwrite the committed source; subsequent edits belong directly in `main.tex`.
+[Page previews and a contact sheet](../rewrite/preview/) are included. Verification in this session comprised source/text review and automated numerical/layout checks; direct visual inspection of the rendered pages was unavailable. Passing document checks does not certify the provenance of every historical detector run or establish new experimental results. Those limitations are stated in the article rather than omitted.
+
+## Research and editorial rationale
+
+[`../rewrite/WRITING_RESEARCH.md`](../rewrite/WRITING_RESEARCH.md) records the primary papers studied and the writing decisions derived from them. The manuscript includes an AI-assistance disclosure identifying ChatGPT and its role in the text and analysis scripts, consistent with the [IEEE author guidance](https://conferences.ieeeauthorcenter.ieee.org/author-ethics/guidelines-and-policies/submission-policies/). The disclosure does not claim that human author approval or journal review has already occurred.

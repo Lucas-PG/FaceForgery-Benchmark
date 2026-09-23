@@ -1,353 +1,887 @@
-   Explaining Spatial and Spectral Face Forgery
-                    Detectors:
-Controlled Comparisons and Shared Failure Analysis
-                                   Lucas Cunha∗ , Lucas Sotomaior∗ , Lucas Gasperin∗ ,
-                                Beatriz Caldas∗ , Eduardo Pianovski∗ , and Rayson Laroca∗
-                                    ∗ Pontifical Catholic University of Paraná, Curitiba, Brazil
-                 ∗ {c.oliveira25,lucas.sotomaior,lucas.gasperin,beatriz.caldas,eduardo.pianovski}@pucpr.edu.br
-                                                      ∗ rayson@ppgia.pucpr.br
+When Robustness Does Not Transfer:
+Spatial and Spectral Cues for Face Forgery Detection
+Lucas Cunha, Lucas Sotomaior, Lucas Gasperin, Beatriz Caldas, Eduardo Pianovski, Rayson Laroca
+Pontifical Catholic University of Paraná, Curitiba, Brazil
+{c.oliveira25,lucas.sotomaior,lucas.gasperin,beatriz.caldas,eduardo.pianovski}@pucpr.edu.br
+rayson@ppgia.pucpr.br
+Abstract—Face forgery detectors can improve on degraded
+images without becoming more transferable to another dataset.
+We investigate this distinction through a reproducible reanalysis
+of released experiments on the Multi-Dimensional Face Forgery
+Image (MFFI) benchmark. The primary evidence comprises 210
+fine-tuned configurations spanning six model families, seven spatial
+or spectral representations, and five seeds, together with 30
+robustly trained RGB runs on the same seed set. We recompute
+clean-test and degraded-test summaries and pair the RGB runs
+with their reported evaluations on a DF40-derived local subset.
+Robust training improves MFFI Test-D AUC in all 30 architecture–
+seed pairs, with architecture-level gains of 5.53–12.96 percentage
+points. Transfer behaves differently: CLIP and DINOv3 improve
+by 6.04 and 6.46 points, whereas Xception declines by 6.77 points
+despite improving on Test-D. Pure-frequency representations
+achieve only 49.55–55.41% mean Test-D AUC under the evaluated
+pipeline; selected hybrid inputs provide smaller, architecture-
+dependent gains. These findings support evaluating degradation
+tolerance, representation choice, and dataset transfer as distinct
+properties. We release the seed-level reconciliation, generated
+tables, and explicit provenance limits rather than interpreting a
+single robustness score as general forensic reliability.
+Index Terms—Face forgery detection, deepfake detection, robust-
+ness, distribution shift, frequency representations, reproducible
+evaluation.
+I. INTRODUCTION
+A face forgery detector is useful only if its decisions
+survive the conditions under which an image is encountered.
+A classifier may distinguish the training collection accurately
+and still rely on cues that change after processing or disappear
+in another collection. Frequency statistics, pretrained visual
+representations, and augmentation offer different ways to
+address this problem [1]–[3]. Their benefits, however, need not
+appear under the same evaluation shift. Better discrimination on
+a degraded test set is not, by itself, evidence of better transfer
+to different sources or forgery methods.
+This distinction matters when interpreting modern bench-
+marks. MFFI varies authentic-image sources, forgery types,
+and test-time degradation [4]. DF40 expands the range of
+forgery techniques and evaluation protocols [5]. Both are
+more informative than a clean-set score alone, but neither
+makes “generalization” a single measurable quantity. Source
+composition, degradation, input representation, and training
+policy can all change at once. Following the broader motiva-
+tion of distribution-shift benchmarks [6], we ask a narrower
+question: when a training regime improves degraded-image
+discrimination, which of those improvements persist under
+dataset transfer?
+We examine this question using the latest released ex-
+periments of our spatial–spectral face-forgery benchmark,
+extending the scope of the preceding study [7]. The analysis
+covers ResNet-18, MobileNetV3-Large, Xception, ViT-B/16,
+CLIP ViT-B/16, and DINOv3 ConvNeXt-Base. Seven input rep-
+resentations distinguish RGB, four pure-frequency encodings,
+and two spatial–spectral concatenations. A second collection
+applies stronger augmentation to RGB training. Instead of
+comparing inconsistent summary rows, we align the primary
+experiments on the same five seeds and recompute their means,
+dispersion, and paired differences from the released records.
+The main result is a separation between two outcomes
+often described by the same word. Robust RGB training
+improves Test-D AUC for every architecture and every included
+seed. Yet the corresponding DF40-subset comparison is not
+uniformly positive: ResNet and Xception lose mean transfer
+AUC, MobileNet changes little, and the pretrained CLIP and
+DINOv3 models gain. Within the standard training matrix,
+replacing RGB with a pure-frequency input also fails to provide
+a generally stronger degraded-image detector. Hybrid inputs
+produce exceptions, not a universal ordering.
+Our contribution is an empirical characterization of these
+distinctions, not a new detection architecture. First, we provide
+a complete, seed-matched comparison of clean performance,
+degradation tolerance, and recorded dataset transfer. Second,
+we contextualize that comparison within the full representation
+matrix, retaining negative results and separating weak initial
+discrimination from robustness. Third, we reconcile the scope of
+the primary results with the separate ensemble and explanation
+artifacts, so that cohort differences and illustrative evidence do
+not become unsupported headline claims. The accompanying
+analysis regenerates the numerical tables and claim values from
+a pinned release [8].
+II. RELATED WORK
+A. Benchmark design and the meaning of transfer
+DeepfakeBench identifies inconsistent preprocessing, exper-
+imental settings, and evaluation as obstacles to meaningful
+detector comparison [9]. DF40 further shows why a detector
+ranked highly under a restricted train–test protocol may not
+address a broader forgery space [5]. MFFI combines multiple
+forgery categories with heterogeneous authentic sources and a
 
-
-
-
-   Abstract—Strong face-forgery detection scores do not identify consistent architectural behavior or identify causes of shared
-the visual evidence a detector uses or explain why different     errors.
-architectures fail on the same image. We extend a spatial–spectral  We address that methodological gap rather than proposing
-MFFI benchmark with three controlled explainability protocols:
-a reproducible 64-image cohort shared across architectures,      another detector. Our first protocol fixes the images before
-matched RGB–frequency comparisons in native coordinates,         comparing explanations. Our second separates two questions
-and complete-roster shared-error analysis with label-matched     that are often conflated: where evidence occurs in a photograph
-controls. The implementation supports twelve attribution and     and which spatial frequencies influence a frequency-input
-perturbation methods, freezes validation-selected thresholds and detector. Our third examines the intersection of errors across
-explanation targets, preserves checkpoint and image provenance,
-and records numerical diagnostics alongside raw maps. The        an explicitly declared model roster, rather than presenting
-earlier benchmark reports a clean-to-degraded ROC-AUC change     independently selected failures from each model. Together,
-from 0.884 to 0.609 for RGB Xception and from 0.809 to           these protocols make comparisons less sensitive to sample
-0.726 for its frozen DINOv3 configuration. These previously      selection, changing targets, and ambiguous coordinate systems.
-reported results motivate, but do not establish, hypotheses about   The extension rests on three distinctions. First, the same
-localized shortcuts, complementary spectral evidence, and shared
-vulnerabilities. We distinguish spatial location from frequency  image need not occupy the same confusion-matrix stratum
-index, attribution agreement from causal evidence, and a balancedfor different models. An identical cohort can be exactly
-diagnostic sample from a representative population sample. This  balanced for a reference checkpoint, not generally for every
-revision delivers the methodology, implementation, and evidence- checkpoint simultaneously. Second, a coefficient of a global
-grounded interpretation before execution of the new image        Fourier transform is not located at a facial landmark. Third,
-experiments; it does not report newly observed heatmaps, new
-detector performance, or demographic effects.                    an association between a heatmap and a nuisance condition
-                                                                 does not establish why a model failed. The implementation
-                      I. I NTRODUCTION                           makes these distinctions operational through frozen manifests,
-   Face forgery detection is a classification problem with an native-coordinate figures, explicit method support, and complete
-unusually demanding interpretation requirement: a correct coverage accounting.
-decision may depend on an acquisition artifact rather than          Our contributions are a deterministic matched-instance expla-
-a manipulation trace, and a convincing explanation may reflect nation protocol; a validation-only selection rule for comparable
-the explanation algorithm more than the detector. Robustness RGB–frequency checkpoints; and a reproducible shared-failure
-therefore cannot be established by a clean-set ranking or workflow with raw attribution, numerical checks, perturbation
-by selecting a small number of visually attractive heatmaps. controls, and resumable execution. The known working training
-A useful analysis must connect the exact source image, and evaluation paths are retained. The new contribution at this
-preprocessing, checkpoint, decision threshold, and scalar output stage is the analysis design and software extension. Previously
-to an explanation whose limitations are explicit.                reported benchmark results are identified as such, while new
-   The Multi-Dimensional Face Forgery Image dataset (MFFI) image-dependent observations are reserved for execution rather
-supports evaluation across heterogeneous face-forgery sources than inferred from code.
-and image degradations [1]. The preceding benchmark of
-                                                                                       II. R ELATED WORK
-Cunha et al. [2] compares six model families across spatial,
-spectral, and hybrid representations. Its reported ranking A. Frequency evidence and shortcut learning
-changes after degradation: the strongest clean RGB detector         Spectral discrepancies can expose regularities introduced
-is not the strongest degraded RGB detector. However, the by image generation [3]. Their presence does not imply
-preceding qualitative analysis uses only four shared images. robustness to acquisition changes or unseen generators. Fre-
-Such examples can motivate hypotheses but cannot establish qDebias explicitly addresses frequency-dependent shortcuts
-using frequency diversification and consistency regularization      loader and original run configuration. It does not replace fine-
-[4]. This motivates a controlled comparison rather than an          tuned architectures with scratch defaults or interpret the two
-assumption that moving into frequency space reveals inherently      collections as a controlled pretraining ablation.
-superior forensic evidence. A frequency cluster could be
-informative, spurious, or partly caused by preprocessing.           B. Preprocessing and identity
-                                                                      The implementation follows the evaluation dataset’s RGB
-B. Attribution methods have different semantics                    normalization and Fourier helpers. The latter compute a
-   Integrated Gradients (IG) measures a fixed output difference centered FFT of luminance, then form log-magnitude, phase,
-relative to a baseline along a path [5]. Grad-CAM uses gradients complex, or masked-magnitude representations. The current
-to weight an intermediate activation map [6]. LIME fits a local hybrid encoding contains RGB plus magnitude, phase, high-
-surrogate [7], while Kernel SHAP estimates feature-coalition pass, and low-pass channels. Because historical checkpoints
-contributions using a Shapley-oriented weighting scheme [8]. can expect six rather than seven channels, the recorded channel
-Attention rollout aggregates attention connectivity and is not count is honored explicitly. The standalone legacy visualization
-equivalent to a class-specific gradient attribution [9]. Comparing helper additionally rescales phase; the new analysis instead
-these methods is useful precisely because they answer different follows the evaluation dataset so that visualization does not
-questions; their agreement is not a collection of independent silently change the model input.
-confirmations.                                                        Legacy prediction IDs are interpreted as original CSV row
-                                                                   positions only after an explicit acknowledgement. The complete
-C. Evaluation requires more than visual plausibility               manifest is hashed; labels and ID sets must match exactly.
-   Parameter-randomization tests can reveal explanations that Missing or unreadable images are never replaced with a
-are insensitive to learned parameters [10]. Perturbation-based neighboring image. A documented earlier export audit identified
-evaluation can itself introduce distribution shift, motivating duplicated and missing validation IDs. The implementation
-stronger controls such as remove-and-retrain protocols [11]. defaults to rejecting such defects. An opt-in derived calibration
-Quantus organizes explanation evaluation around multiple view can remove only identical duplicates, retain a record
-properties rather than a single visual criterion [12]. More recent of missing observations without imputing them, and require a
-work examines off-manifold paths [13], the consequences of common observed population across models. This is a disclosed
-grouping variables into coalitions [14], and formal certification curation operation, not a repair of the original export.
-rather than empirical smoothing [15]. FocusViT uses class-            For each selected image, execution compares the freshly
-specific gradients and validation-based layer aggregation for      computed     fake probability and decision with the frozen
-transformer explanations [16]. These studies inform the present    exported  prediction   before accepting its attribution. A mismatch
-safeguards; manifold IG, certified explanations, FocusViT, and     raises an  error  instead  of silently changing the cohort. Model
-remove-and-retrain evaluation are not implemented or claimed       weights,  configuration,    source images, raw arrays, software
-as completed experiments here.                                     versions,  and   source   code   are hashed. This separates code-
-                                                                   level compatibility from successful reproduction of a particular
-         III. B ENCHMARK SCOPE AND PROVENANCE                      checkpoint–image prediction.
-A. Data and checkpoints                                                   IV. C ONTROLLED EXPLAINABILITY PROTOCOLS
-   The preceding study reports official MFFI partitions con- A. Calibration and a common explanation target
-taining 524,429 training, 147,363 validation, and 181,947 test
-images, with a corresponding degraded test partition termed            Let pmi be the fake-class probability for model m and image
-Test-Hard or Test-D [2]. The proposed analysis reuses existing      i, and let yi = 1 denote a fake image. Each model’s threshold
-checkpoints and predictions and does not require retraining. Its    is selected on its validation predictions and frozen for all test
-primary roster is one RGB checkpoint, seed 42, from each of         analyses:
-ResNet, Xception, MobileNet, ViT, CLIP, and DINO. An 18-
-                                                                                                                    
-                                                                                   tm = arg max BA y, 1[pm ≥ t] ,
-                                                                                              t∈Tm
-checkpoint RGB roster using seeds 42, 123, and 2024 provides                                                                      (1)
-                                                                                          1
-a separate shared-error sensitivity analysis. The roster is part of               BA   =  2 (TPR  + TNR).
-the saved experiment contract, not an implicit claim to cover The candidate set contains observed probabilities and 0, 0.5,
-every trained model.                                                and 1; ties select the smallest candidate. Threshold-free ROC-
-   The original paper and the current checkpoint release are sep- AUC is retained separately. Changing this calibration policy
-arate sources of evidence. The former describes predominantly can change confusion strata and shared-error membership even
-scratch-trained detectors and a frozen DINOv3 configuration; when AUC is unchanged, so the policy is included in the
-the supplied release and current builders include fine-tuned experiment identity.
-configurations. The current DINO builder uses a ConvNeXt               For every class-specific explanation, the target is the fake-
-backbone. Architecture labels alone therefore cannot establish versus-real logit margin
-that a released checkpoint reproduces a row in the original
-paper. The extension retains the existing strict checkpoint                           sm (x) = zm,1 (x) − zm,0 (x).               (2)
-The target is fixed during interpolation and perturbation; it does                             TABLE I
-not switch to whichever class is currently predicted. Signed         I MPLEMENTED EXPLANATION METHODS AND THEIR INTERPRETATION . A
-                                                                       METHOD NAME IS NOT A GUARANTEE OF APPLICABILITY TO EVERY
-input contributions are retained where the method supports              ARCHITECTURE . U NSUPPORTED COMBINATIONS ARE EXPLICITLY
-them. Positive contributions support the fake margin and nega-                                 RECORDED .
-tive contributions support the real margin. A signed derivative,
-rectified Grad-CAM map, and class-agnostic attention map             Methods               Interpretation and important boundary
-retain their distinct meanings rather than being relabeled as        IG; Gradient          Fixed-margin input attribution relative to the
-interchangeable evidence.                                            SHAP                  declared baseline. Numerical residuals are
-                                                                                           recorded; baseline choice remains
-B. Task 1: the same 64 images across architectures                                         consequential.
-                                                                     Kernel SHAP;          Group-level perturbation surrogate. Raw
-   We select ResNet/RGB/seed 42 as the reference checkpoint LIME                           coefficients and the feature mask are
-independently of its heatmaps. A global sampling seed of 42                                retained; display densities are not
-determines four without-replacement draws: 16 true positives,                              individual-pixel Shapley values.
-16 false negatives, 16 true negatives, and 16 false positives. Saliency; input ×           Local or smoothed gradient information.
-                                                                   gradient;               SmoothGrad does not confer formal
-Sorting candidates by identity before sampling makes the SmoothGrad                        robustness certification.
-selected cohort insensitive to prediction-file row order. If a Occlusion; feature          Effects of replacing declared windows or
-stratum contains fewer than 16 images, preparation fails rather ablation; Shapley          feature groups. Ablation effects need not add
-than changing the requested size, introducing duplicates, or sampling                      to a total output difference.
-selecting a more convenient reference.                             Grad-CAM                Rectified gradient-weighted layer localization.
-                                                                                           CNN layers or pre-final-attention token
-   The resulting 64 identities and order are immutable and                                 layers are declared and recorded.
-reused for all primary models. Each model’s own decision and Attention rollout             Residual attention connectivity for supported
-confusion stratum are stored alongside the reference stratum.                              ViT/CLIP models; explicitly class-agnostic.
-Thus the comparison holds instances constant without claiming
-that all models share the reference’s 16×4 confusion matrix. A
-different reference-model sensitivity study must use a separately sampling uses 32 permutations. These are declared starting
-named cohort, not replace unfavorable examples in the primary budgets, not empirically established convergence guarantees.
-one.                                                              A surrogate run is rejected when its sample budget is too
-   This is a diagnostic, case-control-style sample. It intention- small relative to its number of groups. Baseline, sample-
-ally overrepresents errors and is not an unbiased sample of budget, and stochastic-repeat sensitivity analyses use new
-population accuracy, error prevalence, or average explanation frozen configurations.
-faithfulness. Aggregate claims from these images must be
-                                                                     Two controls accompany the primary configuration. First,
-described as conditional on this cohort. Population-level
-                                                                  the binary classifier head is randomized, the explanation recom-
-explanation statistics require a separate random sample or
-                                                                  puted, and the original parameters restored. This checks head
-an explicit sampling-weight analysis.
-                                                                  dependence only; it is not a full cascading-parameter sanity test.
-C. Attribution implementations and controls                       Class-agnostic rollout may appropriately remain unchanged
-                                                                  under head-only randomization, which is not interpreted as a
-   Table I summarizes the supported method families. All inputs
-                                                                  failed class-specific explanation. Second, group deletion and
-are encoded using the checkpoint’s evaluation representation
-                                                                  insertion curves are compared with random group order using
-before attribution. The default baseline is zero in that encoded
-                                                                  the same encoded baseline. Curves explain sensitivity to this
-space; it is not described as a black photograph. A separately
-                                                                  perturbation mechanism, not a causal intervention on image
-frozen configuration can use an encoded blurred-RGB reference
-                                                                  generation, and are not a substitute for remove-and-retrain
-to assess baseline sensitivity. Gradient SHAP currently uses the
-                                                                  evaluation [11]. Constant maps and numerical failures remain
-declared single reference, a degenerate baseline distribution,
-                                                                  visible in the output audit.
-rather than claiming an empirical background distribution.
-   The default patch partition groups RGB channels jointly,
-keeps hybrid RGB and spectral channels separate, and groups D. Task 2: matched spatial–frequency comparisons
-complex real/imaginary components at the same bins. Edge
-patches are included even when dimensions are not divisible          This protocol compares separately trained RGB and pure-
-by the patch size. An optional radial partition groups frequency  frequency    checkpoints of the same architecture, training regime,
-bins by radius. Group-level methods save one coefficient per      and  seed.  Feeding   a Fourier map into an RGB-only checkpoint
-group and a display-density map that distributes that coefficient would   instead  be  an out-of-distribution input intervention and is
-uniformly over its members. Changing the partition changes        not  the  primary  comparison.    DCT is not added to the existing
-the attribution question [14].                                    weight   collection:  a meaningful   DCT-trained comparison would
-   IG uses 64 Gauss–Legendre integration steps and records        require   suitable  checkpoints  and   a separate experiment.
-its completeness residual. Stochastic gradient methods use 32        Selection uses validation evidence only. Eligible RGB–
-samples; surrogate methods use 512 perturbations; Shapley frequency pairs must contain the same three seeds and attain
-AUC of at least 0.60 in both domains for every seed. For                                     TABLE II
-architecture m, frequency representation r, and seed s, define     P REVIOUSLY REPORTED RGB ROC-AUC FROM C UNHA ET AL . [2]. T HE
-                                                                   FINAL COLUMN IS ARITHMETIC SUBTRACTION OF THE REPORTED ROUNDED
-                      1 X                                             MEANS . T HESE ARE THE EARLIER STUDY ’ S CONFIGURATIONS , NOT A
-          R(m, r) =         min{am,RGB,s , am,r,s },                       RE - EVALUATION OF THE CURRENT RELEASED WEIGHTS .
-                     |S|                                   (3)
-                         s∈S
-           am,r,s = AUCval (m, r, s).                                        Earlier configuration   Clean   Test-Hard   Drop
-                                                                             Xception                0.884      0.609    0.275
-We maximize R, break ties by the smaller mean positive RGB-                  ResNet-18               0.846      0.635    0.211
-to-frequency AUC loss, then by deterministic configuration                   MobileNetV3             0.839      0.594    0.245
-names. This prevents a nearly random detector from winning                   ViT, scratch            0.624      0.608    0.016
-                                                                             CLIP-style, scratch     0.750      0.619    0.131
-solely because it has little performance left to lose. It is                 DINOv3, frozen          0.809      0.726    0.083
-a declared analysis rule for existing artifacts, not a claim
-of historical preregistration. Representation robustness and
-robustness to image degradation are reported as separate
-                                                                   The accompanying annotation workflow conceals hard/control
-concepts.
-                                                                   membership and model predictions from reviewers, records
-   The selected seed-42 pair receives the Task 1 cohort. For
-                                                                   uncertain or unassessable observations, and recommends in-
-each supported method and image, a two-column board shows
-                                                                   dependent raters. It does not automatically infer demographic
-the RGB image with its spatial map on the left and the actual
-                                                                   attributes from faces. A quantitative subgroup analysis must
-encoded frequency representation with its own attribution on
-                                                                   report coverage, disagreement, class-conditional errors, source
-the right. Complex spectra retain separate real and imaginary
-                                                                   confounding, and multiplicity handling. Causal language re-
-views in the frequency column. Axes label image pixels and
-                                                                   quires additional controlled interventions; attribution alone
-shifted frequency bins explicitly; independent display scaling
-                                                                   cannot establish a cause.
-is disclosed and raw values remain available.
-   Different clusters across these columns do not by them-            V. E XISTING EVIDENCE AND JUSTIFIED INFERENCES
-selves prove that the frequency model discovered an invisible
-                                                                   A. Previously reported benchmark results
-manipulation artifact. A frequency bin encodes a global spatial-
-frequency component, not an eye or mouth. Consequently, cross-        Table II preserves a compact set of results from the earlier
-domain pixel-overlap scores and facial-localization claims are     paper [2]. They are reported means from that study, not new
-inappropriate. Radial-band concentration can instead motivate      runs of this extension or a claim about the supplied fine-
-further controlled band interventions. Post-encoding perturba-     tuned checkpoints. The table provides the empirical motivation
-tions may not correspond to a realizable image spectrum; any       for explanation experiments without filling their unmeasured
-later inverse-transform experiment must preserve conjugate         outcomes with estimates.
-symmetry and document normalization effects.                          The ranking changes under degradation. That observation
-                                                                   supports evaluating degraded data, but does not isolate the
-E. Task 3: shared failures and matched controls                    influence of pretraining, architecture, or particular visual cues.
-  For a fixed roster M, the hard-sample set is                     The small drop of the earlier ViT is not evidence that it is the
-                                                                   best robust detector: its initial AUC is already substantially
-       H(M) = {i : ∀m ∈ M, 1[pmi ≥ tm ] ̸= yi }.            (4)
-                                                                   lower. This floor effect motivates the minimum-competence
-Computing this intersection requires complete predictions,         constraint in Task 2.
-unique identities, and label agreement on exactly the same            The earlier study also reports degraded AUC of 0.650 for
-population. Missing predictions are neither counted as failures    Xception with RGB plus magnitude, compared with 0.609
-nor removed through an implicit inner join. The empty              for RGB; 0.648 for ResNet with a hybrid frequency stack,
-intersection is a valid result. An image in H(M) is a shared       compared with 0.635 for RGB; and 0.612 for MobileNet
-failure of the declared checkpoints, not a universal adversarial   with RGB plus magnitude, compared with 0.594 for RGB
-example against all architectures or future systems.               [2]. These reported differences are consistent with potential
-   Every image in the six-model primary intersection is retained   complementarity. Without a controlled ablation and uncertainty
-for attribution; no hidden cap or visually selected subset is      analysis, however, they do not prove that spectral channels carry
-applied. The 18-checkpoint intersection is exported separately     a particular manipulation artifact or that the benefit generalizes
-as a seed-roster sensitivity result. A label-matched control set   outside MFFI.
-of equal size is drawn without replacement from outside the
-primary intersection. Controls need not be correct for every       B. Research questions for the new outputs
-model: they are specifically images that do not fail across the       1) Architectural evidence allocation: Task 1 asks whether
-entire roster. This distinction determines the comparison being    apparent localization differences persist when images, targets,
-made.                                                              and preprocessing are controlled. Localized CNN maps or
-   Lighting, occlusion, compression, manipulation source, and      diffuse transformer maps are hypotheses to examine, not
-skin-tone-related hypotheses require suitable annotations and      anticipated findings to write into a results table. Layer
-denominators. Label matching does not balance these factors.       resolution, rectification, baseline choice, and class-agnostic
-attention can themselves change map appearance. A convincing the generated artifacts. A working base branch is evidence
-architectural interpretation should survive appropriate controls of an existing integration path, not a proof that every new
-and distinguish true positives from false positives and false architecture–method combination works on every checkpoint
-negatives.                                                       or software installation.
-   2) Complementary spectral evidence: Task 2 asks whether         MFFI degradation robustness is not equivalent to cross-
-the validation-selected frequency model emphasizes coherent dataset or unseen-generator generalization. The earlier paper’s
-spectral bands or orientations and whether those groups affect architecture and pretraining factors are not fully controlled,
-its fixed margin under the specified perturbation. A positive and its reported means do not provide enough information to
-result would justify more targeted forensic experiments; a establish statistical superiority here. Three seed realizations
-negative or unstable result would weaken the claim of useful characterize those runs, not the full distribution of training un-
-complementary frequency evidence. Neither outcome is prede- certainty. Image bootstrap intervals, if subsequently computed,
-termined by converting an image to a Fourier representation. should account for repeated identities or correlated sources
-   3) Shared vulnerabilities: Task 3 asks which conditions are where such metadata exists.
-enriched among shared failures relative to declared controls,      The balanced 64-image cohort conditions on a reference
-and whether explanations remain informative after numerical model’s outcomes. Shared-error membership also conditions
-and randomization checks. Shared-error prevalence can be on the roster and its thresholds. Both designs can change
-computed from complete existing predictions without retraining. the observed distribution of nuisance conditions. Baseline
-Explanations for that prevalence require source images and substitution and Fourier-channel perturbations may leave the
-appropriate nuisance annotations. The implementation exports data manifold, while head-only randomization tests only a
-the population, thresholds, and roster needed to report the narrow aspect of parameter dependence. Different explanation
-number honestly; this manuscript does not substitute unaudited methods share these limitations and are not independent
-earlier draft counts for those generated artifacts.              replications. No new fairness, demographic, localization, causal,
-    VI. R EPRODUCIBILITY AND COMPUTATIONAL SCOPE                 or state-of-the-art claim is made from unmeasured outcomes.
-   The entry point separates preparation, description, execution,
-rendering, and reporting. Preparation reads existing prediction                              VIII. C ONCLUSION
-and metadata files and freezes cohorts without importing models        We provide a controlled extension for explaining spatial
-or accessing images. A dry run describes requested cells rather     and spectral face-forgery detectors and studying their shared
-than claiming measured runtime. The default Task 1 design           failures. The central design choices are an immutable matched-
-requests 64×6×12 = 4,608 method–model–image cells before            instance cohort, a fixed fake-versus-real target, validation-only
-unsupported combinations and controls; Task 3 scales with           selection of a competent RGB–frequency pair, native-coordinate
-the actual intersection size. No wall-clock estimate is inferred    visualization, and complete-roster error analysis with explicitly
-from these counts.                                                  defined controls. Existing benchmark evidence motivates these
-   Execution can be split by model, method, and deterministic       questions but does not answer them. The implementation
-image-ID shard. Each completed cell contains raw attribution ar-    and manuscript establish what can be inferred from current
-rays, feature masks, estimator metadata, image and checkpoint       artifacts and what must be measured, allowing later experiment
-hashes, fresh prediction checks, and rendered maps. Resume          execution to supply results without changing the scientific
-verifies identities and artifact checksums. A failed cell, an       meaning of the protocol.
-unsupported method, and an unexecuted cell are distinct states.
-Coverage over all requested cells is reported independently                       D ISCLOSURE AND AUTHOR REVIEW
-of explanation validity. The default configuration retains the
-working ICLR training, model-building, and evaluation code             AI assistance was used for literature retrieval, methodological
-and adds Captum as an opt-in dependency.                            critique, programming, and manuscript drafting. Human authors
-   Synthetic unit checks test mathematical and software con-        must review the implementation, citations, experimental outputs,
-tracts using small generated tensors: deterministic sampling,       and interpretation before submission. The listed authors are
-strict population alignment, analytic IG behavior, feature-group    carried forward from the supplied earlier manuscript and do not
-conservation, and parity with existing encoding helpers. They       imply their approval of this revision. The accepted SIBGRAPI
-are not detector benchmarks, trained-checkpoint evaluations, or     study is cited as prior work; this extension is not presented
-evidence that a real-image explanation is faithful. The current     as an accepted or submitted ICLR paper. Venue eligibility,
-scope does not schedule GPU experiments, launch a training          substantive overlap, and the final disclosure remain subject to
-matrix, or require new compute access. Full instructions and the    author review.
-machine-readable configuration accompany the source revision.
-                                                                                                 R EFERENCES
-  VII. L IMITATIONS AND RESPONSIBLE INTERPRETATION
-  This extension has not executed the new full-cohort image          [1] C. Miao et al., “MFFI: Multi-dimensional face forgery image dataset
-                                                                         for real-world scenarios,” in Proceedings of the ACM International
-experiments. Its software can be reviewed and tested inde-               Conference on Multimedia, 2025, pp. 13 235–13 242. [Online]. Available:
-pendently, but a final empirical results section depends on              https://arxiv.org/abs/2509.05592
-[2] L. Cunha, L. Sotomaior, L. Gasperin, B. Caldas, E. Pianovski, and                 in Proceedings of the Annual Meeting of the Association for
-    R. Laroca, “Benchmarking spatial, spectral, and self-supervised cues              Computational Linguistics, 2020, pp. 4190–4197. [Online]. Available:
-    for face forgery detection under realistic degradation,” arXiv preprint           https://aclanthology.org/2020.acl-main.385/
-    arXiv:2609.01511, 2026, the manuscript states acceptance for presentation    [10] J. Adebayo, J. Gilmer, M. Muelly, I. Goodfellow, M. Hardt, and
-    at SIBGRAPI 2026. [Online]. Available: https://arxiv.org/abs/2609.01511           B. Kim, “Sanity checks for saliency maps,” in Advances in Neural
-[3] J. Frank, T. Eisenhofer, L. Schoenherr, A. Fischer, D. Kolossa, and               Information Processing Systems, vol. 31, 2018. [Online]. Available:
-    T. Holz, “Leveraging frequency analysis for deep fake image recognition,”         https://arxiv.org/abs/1810.03292
-    in International Conference on Machine Learning, ser. Proceedings of         [11] S. Hooker, D. Erhan, P.-J. Kindermans, and B. Kim, “A benchmark
-    Machine Learning Research, vol. 119, 2020, pp. 3247–3258. [Online].               for interpretability methods in deep neural networks,” in Advances
-    Available: https://proceedings.mlr.press/v119/frank20a.html                       in Neural Information Processing Systems, vol. 32, 2019. [Online].
-[4] H. Kashiani, N. A. Talemi, and F. Afghah, “FreqDebias: Towards                    Available: https://arxiv.org/abs/1806.10758
-    generalizable deepfake detection via consistency-driven frequency            [12] A. Hedström, L. Weber, D. Krakowczyk, D. Bareeva, F. Motzkus,
-    debiasing,” in Proceedings of the IEEE/CVF Conference on Computer                 W. Samek, S. Lapuschkin, and M. M.-C. Höhne, “Quantus:
-    Vision and Pattern Recognition, 2025, pp. 8775–8785. [Online]. Available:         An explainable AI toolkit for responsible evaluation of neural
-    https://openaccess.thecvf.com/content/CVPR2025/html/Kashiani_                     network explanations and beyond,” Journal of Machine Learning
-    FreqDebias_Towards_Generalizable_Deepfake_Detection_via_                          Research, vol. 24, no. 34, pp. 1–11, 2023. [Online]. Available:
-    Consistency-Driven_Frequency_Debiasing_CVPR_2025_paper.html                       https://jmlr.org/papers/v24/22-0142.html
-[5] M. Sundararajan, A. Taly, and Q. Yan, “Axiomatic attribution for             [13] E. Zaher, M. Trzaskowski, Q. Nguyen, and F. Roosta, “Manifold
-    deep networks,” in International Conference on Machine Learning,                  integrated gradients: Riemannian geometry for feature attribution,” in
-    ser. Proceedings of Machine Learning Research, vol. 70, 2017,                     International Conference on Machine Learning, ser. Proceedings of
-    pp. 3319–3328. [Online]. Available: https://proceedings.mlr.press/v70/            Machine Learning Research, vol. 235, 2024, pp. 58 090–58 104. [Online].
-    sundararajan17a.html                                                              Available: https://proceedings.mlr.press/v235/zaher24a.html
-[6] R. R. Selvaraju, M. Cogswell, A. Das, R. Vedantam, D. Parikh, and            [14] X. Zheng, H. Deng, and Q. Zhang, “Towards attributions of
-    D. Batra, “Grad-CAM: Visual explanations from deep networks via                   input variables in a coalition,” in International Conference on
-    gradient-based localization,” in Proceedings of the IEEE International            Machine Learning, ser. Proceedings of Machine Learning Research,
-    Conference on Computer Vision, 2017, pp. 618–626. [Online]. Avail-                vol. 267, 2025, pp. 78 115–78 138. [Online]. Available: https:
-    able: https://openaccess.thecvf.com/content_iccv_2017/html/Selvaraju_             //proceedings.mlr.press/v267/zheng25d.html
-    Grad-CAM_Visual_Explanations_ICCV_2017_paper.html                            [15] A. Anani, T. Lorenz, M. Fritz, and B. Schiele, “Pixel-level
-[7] M. T. Ribeiro, S. Singh, and C. Guestrin, ““Why Should I Trust You?”:             certified explanations via randomized smoothing,” in International
-    Explaining the predictions of any classifier,” in Proceedings of the ACM          Conference on Machine Learning, ser. Proceedings of Machine
-    SIGKDD International Conference on Knowledge Discovery and Data                   Learning Research, vol. 267, 2025, pp. 1505–1533. [Online]. Available:
-    Mining, 2016, pp. 1135–1144.                                                      https://proceedings.mlr.press/v267/anani25a.html
-[8] S. M. Lundberg and S.-I. Lee, “A unified approach to interpreting            [16] M. Ali, H. Raza, J. Q. Gan, and M. H. Khan, “FocusViT: Faithful
-    model predictions,” in Advances in Neural Information Processing                  explanations for vision transformers via gradient-guided layer-skipping,”
-    Systems, vol. 30, 2017. [Online]. Available: https://papers.nips.cc/paper/        in International Conference on Artificial Intelligence and Statistics, ser.
-    7062-a-unified-approach-to-interpreting-model-predictions                         Proceedings of Machine Learning Research, vol. 300, 2026, pp. 1522–
-[9] S. Abnar and W. Zuidema, “Quantifying attention flow in transformers,”            1530. [Online]. Available: https://proceedings.mlr.press/v300/ali26a.html
 
+degraded test partition [4]. We use these works to distinguish an
+evaluation condition from a claim of universal generalization.
+In particular, our local DF40 export is not equated with every
+official DF40 protocol, and clean MFFI testing is not assumed
+to be identically distributed with training.
+B. Spatial, spectral, and pretrained representations
+Frequency analysis can expose regularities of image gen-
+eration that are less apparent in the spatial image [1]. Such
+usefulness is conditional on the representation and training
+setting. FreqDebias, for example, addresses spectral bias with
+frequency-aware augmentation and consistency objectives [10];
+it is not simply a classifier trained on an FFT magnitude
+image. Consequently, a negative result for our magnitude,
+phase, or complex-input baselines cannot refute frequency-
+aware detection as a whole.
+Wang et al. show the importance of training choices, includ-
+ing processing-based augmentation, when testing generated-
+image detection beyond a training generator [2]. Ojha et
+al. demonstrate a different route through pretrained features
+and simple classifiers [3]. CLIP learns transferable visual
+representations using language supervision [11], while DINOv3
+provides self-supervised visual models [12]. We evaluate fine-
+tuned classifiers built on these families, not a reproduction of
+CLIP zero-shot detection or a frozen-feature universal-detector
+protocol. Nor is architecture isolated from pretraining data,
+model size, or fine-tuning policy. Our comparisons concern
+the implemented systems.
+C. Explanations require a separate evaluation
+A plausible saliency map does not establish why one
+model transfers better. Integrated Gradients (IG) and Grad-
+CAM answer different attribution questions [13], [14], and the
+appearance of a map alone is insufficient to assess dependence
+on learned parameters [15]. The distinction between explanatory
+appearance and an evaluated explanation is central to rigorous
+interpretability research [16]. We therefore separate the existing
+qualitative gallery from the quantitative detection results and
+describe the controls needed for a stronger mechanism-oriented
+analysis.
+III. EXPERIMENTAL SCOPE AND EVIDENCE
+A. Data and evaluation conditions
+We study binary image classification with y = 0 for real
+images and y = 1 for forgeries. MFFI is the source benchmark.
+Table I gives the exact counts in the released CSV manifests,
+rather than rounding them to the dataset paper’s nominal totals.
+The three manifests contain no duplicate image filenames
+within a split and no exact filename overlap across splits. This
+is a filename-level check, not evidence of disjoint identities,
+independent video frames, or absence of near-duplicate content.
+We distinguish three conditions. Clean test denotes the
+provided MFFI test partition without the additional Test-
+D processing. It is not an i.i.d. claim: the original dataset
+deliberately varies authentic sources across its partitions [4].
+Test-D is MFFI’s degraded test condition. The dataset design
+TABLE I
+EXACT MFFI MANIFEST COUNTS IN THE PINNED RELEASE. COUNTS
+DESCRIBE THE MANIFESTS, NOT INDEPENDENTLY VERIFIED IMAGE-LEVEL
+COVERAGE FOR EVERY HISTORICAL RUN.
+Partition
+Real
+Fake
+Total
+Train
+99,386
+425,043
+524,429
+Validation
+59,082
+88,281
+147,363
+Clean test
+77,602
+104,345
+181,947
+includes conventional processing disturbances and patch-based
+adversarial perturbations; the released per-run AUC records
+do not identify each image’s realized operation or severity.
+We therefore analyze the reported aggregate condition, not a
+corruption-specific response curve or robustness against a newly
+optimized adaptive attack. Dataset transfer denotes evaluation
+of the MFFI-trained systems on the project’s DF40-derived
+local subset.
+The external preparation code samples selected available
+folders, pools authentic sources, and skips missing folders.
+Its evaluation manifest is absent from the aggregate release.
+We therefore use “DF40 subset” rather than claim complete
+official coverage. Transfer differences may reflect source
+composition and preprocessing as well as forgery methods;
+their interpretation is restricted to this local evaluation.
+B. A fixed primary seed population
+The primary seed set is
+S = {7, 42, 123, 2024, 2025}.
+(1)
+The standard fine-tuning table contains exactly one row for
+every combination of six families, seven representations, and
+these five seeds: 210 configurations in total. The robust-training
+exports contain 30 RGB rows, one for every family–seed
+pair. We join the two collections by family and seed and
+separately join the RGB standard runs to the seed-level DF40
+evaluation table. No seed is imputed, duplicated, or replaced
+after examining its score.
+Seed 987 is not part of this primary comparison. Earlier
+robust-training code constructs an unsuffixed fine-tuning run
+and can store its output under that regime’s path. Combining
+such records with nominal standard runs would make a
+directory label insufficient to identify the training treatment.
+The chosen primary cohort instead follows the complete
+standard matrix and its matching robust exports. This is a
+retrospective inclusion rule based on record structure, not a
+claim of preregistration.
+The ensemble collection is secondary evidence. It reports
+five-seed summaries, but does not supply the constituent rows
+needed to reconcile every aggregate to S; the same collection
+includes self-ensemble member lists containing seed 987. We
+therefore preserve its reported means and dispersion in a
+separate table rather than pool them with the recomputed
+primary results. A five-member self-ensemble is one combined
+predictor, not five independent evaluations of that predictor.
+
+
+C. Provenance and reproducibility boundary
+All
+evidence
+is
+frozen
+at
+source
+revision
+d156d7789728
+[8].
+The
+analysis
+verifies
+source-file
+Git identities, checks the complete experimental grid, and
+generates its tables, figure, and numerical text values directly
+from the selected records. Robust per-seed metrics were
+exported to four decimal places, so recomputation does not
+recover additional measurement precision.
+The present work adds analysis, not new detector training.
+Numerical aggregation is reproducible, but historical predic-
+tions are not independently reproduced: checkpoint hashes,
+resolved configurations, external manifests, and per-example
+outputs are incomplete. The released code describes the
+intended pipeline rather than certifying every historical run.
+Original records remain unchanged, and the reconciliation
+identifies exclusions explicitly.
+IV. MODELS, REPRESENTATIONS, AND ANALYSIS
+A. Detector families and input construction
+The evaluated families are ResNet-18 [17], MobileNetV3-
+Large [18], Xception [19], ViT-B/16 [20], CLIP ViT-B/16 [11],
+and DINOv3 ConvNeXt-Base [12]. The DINOv3 configuration
+uses a ConvNeXt backbone; its results must not be interpreted
+as a comparison of two vision-transformer architectures against
+convolutional networks. Each family is adapted for two-class
+prediction, and the input projection is adapted to the selected
+number of channels.
+The standard matrix contains seven named representations.
+RGB retains the three spatial channels. Magnitude, phase,
+complex, and high-pass modes provide only frequency-domain
+inputs. RGB+M concatenates RGB with spectral magnitude.
+The hybrid mode concatenates RGB with several spectral maps.
+In the released encoder, the image is resized to the configured
+spatial resolution, converted to luminance, and transformed by
+a centered two-dimensional FFT,
+F = fftshift
+ FFT2(0.299R + 0.587G + 0.114B)
+
+.
+(2)
+Magnitude uses log compression and per-image range normal-
+ization; phase is scaled by its angular range. The complex repre-
+sentation retains real and imaginary components with a shared
+magnitude scale. The high-pass representation suppresses the
+central frequency disk before magnitude compression. RGB
+uses ImageNet channel normalization.
+The current hybrid encoder outputs RGB, magnitude, phase,
+high-pass, and low-pass channels; compatibility code also
+supports earlier channel layouts. Since historical summary rows
+do not resolve every layout version, we report the released
+mode identifiers rather than claim that all historical hybrids
+have an independently verified channel contract. These are
+global frequency-coordinate inputs, not spatial maps of where
+a face was manipulated. Concatenating spectral bins with RGB
+pixels likewise does not make their coordinates physically
+equivalent.
+B. Standard and robust training regimes
+The standard RGB transform uses random resized cropping,
+horizontal flipping, and modest color jitter. In the released
+standard entry point, non-RGB modes instead follow a resize-
+based path without the same random augmentation. Thus the
+seven-mode experiment compares the released pipelines; it is
+not a fully factorial test isolating input representation from
+augmentation. This distinction is essential when interpreting
+weak spectral results.
+The robust RGB path uses stronger, stochastic image-space
+processing. Random resized cropping uses a scale range of
+[0.8, 1.0], followed by horizontal flipping. Rotation, contrast,
+brightness, JPEG compression, and Gaussian noise are each
+enabled with probability 0.5; sharpness and Gaussian blur
+use probability 0.3. Rotation spans [−30◦, 30◦]; contrast and
+brightness factors span [0.4, 1.8] and [0.5, 1.8]. Sharpness
+spans [0.2, 2.0], blur radius [0.5, 2.0], JPEG quality [25, 90],
+and additive-noise standard deviation [0.01, 0.08] on the unit-
+scaled tensor. Noise is clipped to the valid input range before
+normalization.
+The released configuration defaults use 224 × 224 inputs,
+including Xception, and a two-class cross-entropy objective.
+The trainer uses AdamW, validation-AUC checkpoint selection,
+and a validation-driven learning-rate scheduler. Family-specific
+settings differ: the base configuration allows 50 epochs, whereas
+CLIP and Xception specify 20; CLIP specifies batch size
+16 rather than the base 32. DINOv3 also overrides learning
+rates and enables mixup. The robust launcher accepts addi-
+tional command-line overrides and explicitly builds a fine-
+tuning model before training. We therefore refer to a seed-
+matched regime comparison, not an exactly compute-matched
+or augmentation-only causal intervention. Resolved per-run
+configurations would be needed to establish the latter.
+C. Metrics, paired differences, and uncertainty
+For a system with fake-class score p(x), ROC AUC measures
+the probability that a randomly selected fake receives a higher
+score than a randomly selected real, with half credit for ties.
+We denote the recorded AUC by Aq
+m,r,s, for model family
+m, regime r, seed s, and evaluation condition q. The regime
+difference is computed within seed:
+δq
+m,s = Aq
+m,rob,s −Aq
+m,std,s,
+¯δq
+m = 1
+5
+X
+s∈S
+δq
+m,s.
+(3)
+We report arithmetic means and sample standard deviations
+across the five seeds, using denominator 5 −1. Tables express
+AUC in percent and differences in percentage points (pp).
+Dispersion of the paired difference is calculated from the five
+differences, not by combining two marginal standard deviations
+as if the runs were unpaired.
+These standard deviations describe variation across the
+available runs. They are not confidence intervals over images,
+identities, or future datasets. The aggregate exports do not
+support an image- or video-cluster bootstrap for the full primary
+matrix. We therefore report the direction of each paired change
+without converting the 30 pairs into independent replications of
+
+
+a population-level hypothesis test. AUC also does not establish
+calibration, precision at operational prevalence, or an acceptable
+false-positive rate at a particular decision threshold.
+D. Secondary fusion and qualitative evidence
+The ensemble records compare arithmetic score averaging,
+geometric fusion, and a validation-fitted stacking model. We
+retain the CLIP–DINOv3 pair and the all-six-family ensemble
+under all three reported strategies, rather than quote only the
+maximum external score. Stacking’s validation value is a fitting-
+set statistic unless an independent meta-validation split is
+available; it should not be treated as an unbiased estimate
+for selecting among fusion strategies. Exact score definitions
+and cohort provenance remain part of the release, and the
+primary conclusions do not depend on an ensemble gain over
+S.
+The release also contains a two-image Celeb-DF gallery,
+using a real example and a forged example with selected
+ResNet, CLIP, and DINO models. Its scripts apply Grad-CAM
+and/or IG but do not preserve the full raw attribution arrays,
+numerical residuals, and resolved checkpoint identities needed
+for a quantitative explanation study. We use the gallery only
+to motivate the controlled analysis discussed in Section VI-B;
+it does not supply evidence for the main detection claims.
+V. RESULTS
+A. Robust training consistently improves the degraded condi-
+tion
+Table II shows the primary RGB comparison. All 30 paired
+Test-D changes are positive. Architecture-level gains range
+from 5.53 pp for Xception to 12.96 pp for DINOv3. CLIP
+increases from 74.89% to 84.53% AUC, and DINOv3 from
+71.47% to 84.44%. The conventional convolutional and ViT
+baselines also improve; the effect is not confined to the two
+large-pretraining families.
+The improvement is not free of clean-performance trade-
+offs. Mean clean AUC decreases for five of the six families.
+ResNet falls by 3.57 pp, whereas ViT increases by 0.84 pp.
+DINOv3 retains the highest recorded mean clean AUC among
+the robust RGB systems, but CLIP and DINOv3 have very
+similar mean Test-D AUC. Their Test-D run dispersion differs:
+the corresponding SDs round to 0.24 and 1.95 pp. Five seeds do
+not justify declaring a reliable winner from the small difference
+between those means.
+A clean-to-degraded gap can shrink through better degraded
+discrimination, worse clean discrimination, or both. Table II
+reports the absolute scores to distinguish these outcomes rather
+than equating a smaller gap with a better detector.
+B. The Test-D improvement does not transfer uniformly
+The external comparison changes the interpretation of the
+robust-training gains. Table III reports the same family–seed
+pairs on the DF40 subset. CLIP improves by 6.04 pp and
+DINOv3 by 6.46 pp. ViT gains 2.36 pp. MobileNet’s mean
+increase is only 0.27 pp, while ResNet and Xception decrease
+by 2.02 and 6.77 pp, respectively.
+−5
+0
+5
+10
+15
+Robust minus standard AUC (percentage points)
+ResNet
+MobileNet
+Xception
+ViT
+CLIP
+DINOv3
+Test-D
+DF40 subset
+Fig. 1. The two evaluations respond differently to the training regime. Points
+show mean paired changes; whiskers show sample SD of those changes across
+five seeds, not confidence intervals. Test-D gains are positive for every family,
+whereas the DF40-subset change is negative for ResNet and Xception.
+Xception is the clearest counterexample to equating the two
+properties: its Test-D AUC improves in all five seeds while its
+external AUC declines in all five. ResNet improves on Test-D
+in all five seeds but on the external subset in only one. CLIP
+improves in both conditions for every included seed. DINOv3
+improves externally in four of five seeds, despite having the
+largest mean Test-D gain. Figure 1 places these differences on
+the same scale without averaging them into a single robustness
+index.
+These observations do not identify the causal source of
+a transfer loss. An augmentation may suppress a useful
+source-specific cue, change optimization, or interact with
+pretraining and classifier adaptation; the local external pipeline
+may add another shift. The released records cannot separate
+those explanations. They do support the operationally relevant
+statement that the observed Test-D gain is insufficient to predict
+the sign of the external gain for every detector family.
+C. Pure-frequency inputs are weak under the evaluated pipeline
+Table IV places the RGB findings in the full standard
+fine-tuning matrix. Across the four pure-frequency encodings
+and six families, mean Test-D AUC ranges from 49.55%
+to 55.41%. The RGB baselines discriminate more strongly
+in that condition. Some frequency models are already weak
+on the clean test, particularly the complex-input CLIP and
+DINOv3 configurations. A small degradation gap for an almost
+chance-level detector is not evidence of a useful invariant
+representation.
+The hybrid results contain useful exceptions. ResNet’s hybrid
+mode reaches 68.66% Test-D AUC versus 66.47% for its
+standard RGB model. ViT’s RGB+M mode reaches 71.23%
+versus 69.25%, while also improving its clean mean. These
+gains are smaller than the respective recorded gains from
+robust RGB training, but they prevent the stronger claim
+
+
+TABLE II
+PRIMARY SEED-MATCHED RGB COMPARISON ON MFFI. EACH AUC CELL IS MEAN ± SAMPLE SD OVER S = {7, 42, 123, 2024, 2025}. THE LAST
+COLUMN SUMMARIZES THE FIVE WITHIN-SEED ROBUST-MINUS-STANDARD DIFFERENCES. VALUES ARE RECOMPUTED FROM RELEASED PER-SEED
+RECORDS; SD IS NOT A POPULATION CONFIDENCE INTERVAL.
+Model
+Clean test AUC (%)
+Test-D AUC (%)
+Test-D gain (pp)
+Standard
+Robust
+Standard
+Robust
+Paired difference
+ResNet-18
+88.45 ± 1.13
+84.87 ± 0.84
+66.47 ± 0.87
+76.90 ± 0.73
++10.42 ± 1.07
+MobileNetV3-L
+84.70 ± 0.24
+83.12 ± 0.65
+67.00 ± 0.52
+74.89 ± 0.64
++7.89 ± 0.78
+Xception
+77.29 ± 0.42
+75.45 ± 0.14
+62.97 ± 0.13
+68.50 ± 0.41
++5.53 ± 0.36
+ViT-B/16
+81.43 ± 0.94
+82.27 ± 0.54
+69.25 ± 0.84
+76.39 ± 0.51
++7.14 ± 1.06
+CLIP ViT-B/16
+91.95 ± 0.41
+90.75 ± 0.15
+74.89 ± 1.03
+84.53 ± 0.24
++9.65 ± 1.15
+DINOv3 ConvNeXt-B
+93.58 ± 0.62
+92.69 ± 1.02
+71.47 ± 1.15
+84.44 ± 1.95
++12.96 ± 1.69
+TABLE III
+RECORDED TRANSFER TO THE DF40-DERIVED LOCAL SUBSET, USING THE
+SAME PRIMARY SEEDS AS TABLE II. “POSITIVE PAIRS” COUNTS SEEDS
+WITH POSITIVE ROBUST-MINUS-STANDARD AUC. THE SUBSET IS NOT
+ASSERTED TO REPRODUCE THE COMPLETE OFFICIAL DF40 PROTOCOL.
+Model
+Standard
+Robust
+Gain
+Positive
+AUC (%), mean ± SD
+(pp)
+pairs
+ResNet
+70.00 ± 2.53
+67.98 ± 2.50
+−2.02
+1/5
+MobileNet
+69.84 ± 0.56
+70.10 ± 1.69
++0.27
+4/5
+Xception
+73.94 ± 0.66
+67.18 ± 0.99
+−6.77
+0/5
+ViT
+69.93 ± 1.20
+72.29 ± 1.99
++2.36
+4/5
+CLIP
+75.15 ± 3.85
+81.19 ± 1.32
++6.04
+5/5
+DINOv3
+71.46 ± 2.75
+77.92 ± 3.53
++6.46
+4/5
+that spectral information never helps. For CLIP and DINOv3,
+neither concatenation improves on the standard RGB Test-D
+mean.
+The comparison has two confounders that constrain in-
+terpretation. First, the standard entry point applies different
+augmentation policies to RGB and non-RGB modes. Second,
+adapting a pretrained RGB input layer to one, two, four, or
+more channels is not neutral with respect to the pretraining
+problem. These records therefore establish that the evaluated
+spectral pipelines are weak, not that frequency information is
+intrinsically uninformative. A stronger follow-up would hold
+augmentation, input adaptation, and optimization budget fixed
+while comparing a capable spectral branch against an extra-
+capacity spatial control.
+D. More ensemble members do not guarantee better discrimi-
+nation
+The secondary ensemble summaries show a consistent within-
+collection pattern (Table V). The CLIP–DINOv3 pair has higher
+reported clean, Test-D, and DF40-subset AUC than the all-
+six ensemble under each of the three fusion strategies. For
+geometric fusion, the pair records 87.81% Test-D AUC and
+82.47% DF40-subset AUC, compared with 85.62% and 79.31%
+for all six. Arithmetic averaging exhibits a larger separation in
+these two conditions.
+The pattern is compatible with weaker or redundant members
+diluting a strong pair, but aggregate AUC does not identify
+that mechanism. A weak standalone detector may still repair
+important errors. Testing this possibility requires aligned per-
+image predictions and an analysis of repaired versus newly
+introduced errors at fixed thresholds; neither is inferred from
+ensemble size.
+The source collection additionally reports a corrected Celeb-
+DF six-model geometric-fusion summary of 67.80% frame
+AUC and 72.60% video AUC, compared with 65.09% and
+70.17% for the CLIP–DINOv3 pair. This differs from the
+ordering in Table V. The associated legacy evaluator targets
+seed 987 and averages frame probabilities at video level; it is
+a separate setting, not a five-seed replication of the primary
+experiment. Because the corrected per-frame export and exact
+evaluation manifest are absent, we retain these values only as
+ancillary reported results, not as an independently verified
+transfer claim or a basis for selecting an ensemble. This
+distinction also prevents a video-level number from being
+compared directly to an image-level leaderboard.
+VI. INTERPRETATION, LIMITATIONS, AND REUSE
+A. What the evidence establishes
+The primary comparison answers the opening question
+with a qualified negative: improvements on MFFI Test-D do
+not transfer uniformly to the recorded external subset. This
+conclusion follows from the paired observations, not from an
+assumed distinction between “semantic” and “artifact” features.
+CLIP and DINOv3 are useful baselines in this collection, but
+their architectures, pretraining objectives, pretraining data, and
+fine-tuning settings differ. The results do not identify which of
+these factors accounts for their behavior.
+The representation matrix favors establishing a strong
+augmented RGB baseline before adding complexity. This
+is conditional on the evaluated pipelines, not a rejection of
+tailored frequency-aware methods [10]. A controlled follow-up
+should test spectral information against identical augmentation,
+computation, and additional spatial capacity, without choosing
+variants by their best target-test row.
+For model selection, clean performance, degradation toler-
+ance, and external transfer should remain separately visible.
+Combining them into a weighted mean would add a deploy-
+ment preference that these experiments do not specify. An
+operating decision also needs calibrated thresholds, realistic
+class prevalence, and the costs of false allegations and missed
+
+
+TABLE IV
+THE COMPLETE STANDARD REPRESENTATION MATRIX: CLEAN-TEST / TEST-D MEAN AUC (%) OVER THE PRIMARY FIVE SEEDS. RGB+M CONCATENATES
+RGB AND FFT MAGNITUDE; HYBRID IS THE RELEASE’S MULTI-MAP SPATIAL–SPECTRAL MODE. THIS IS A COMPARISON OF RELEASED PIPELINES, NOT AN
+AUGMENTATION-MATCHED FACTORIAL ABLATION. PER-SEED VALUES AND SDS REMAIN AVAILABLE IN THE ANALYSIS EXPORT.
+Model
+RGB
+Magnitude
+Phase
+Complex
+High-pass
+RGB+M
+Hybrid
+ResNet
+88.45 / 66.47
+75.03 / 54.09
+64.67 / 52.11
+69.92 / 54.36
+75.00 / 53.65
+87.17 / 66.62
+83.37 / 68.66
+MobileNet
+84.70 / 67.00
+71.77 / 54.20
+62.87 / 52.34
+68.72 / 53.37
+71.27 / 54.52
+80.49 / 62.96
+70.84 / 60.32
+Xception
+77.29 / 62.97
+70.35 / 53.28
+58.89 / 51.11
+56.22 / 51.74
+69.94 / 53.30
+73.29 / 61.19
+65.92 / 57.46
+ViT
+81.43 / 69.25
+72.40 / 53.47
+60.20 / 49.55
+57.01 / 55.41
+72.40 / 52.81
+82.65 / 71.23
+79.15 / 67.56
+CLIP
+91.95 / 74.89
+73.36 / 53.00
+62.65 / 49.94
+52.71 / 51.97
+73.16 / 53.28
+89.41 / 72.60
+77.89 / 65.05
+DINOv3
+93.58 / 71.47
+76.14 / 53.65
+71.28 / 53.32
+49.95 / 49.77
+76.31 / 53.71
+91.66 / 68.34
+86.03 / 68.20
+TABLE V
+SECONDARY LEGACY ENSEMBLE SUMMARIES: REPORTED MEAN ± SD AUC (%). THESE AGGREGATES ARE REPRODUCED FROM THEIR SOURCE TABLE,
+NOT RECOMPUTED FROM CONSTITUENT PREDICTIONS OR POOLED WITH THE PRIMARY SEED COHORT. VALIDATION IS THE STACKING FITTING SET UNLESS
+INDEPENDENTLY HELD OUT. NO ENSEMBLE IS SELECTED HERE SOLELY BY ITS BEST TARGET-TEST VALUE.
+Members
+Fusion
+Validation
+Clean test
+Test-D
+DF40 subset
+CLIP+DINOv3
+Mean
+99.62 ± 0.05
+93.60 ± 0.38
+86.90 ± 0.97
+82.64 ± 1.50
+CLIP+DINOv3
+Geometric
+99.63 ± 0.06
+93.96 ± 0.58
+87.81 ± 1.10
+82.47 ± 1.78
+CLIP+DINOv3
+Stacking
+99.64 ± 0.05
+93.66 ± 0.45
+86.69 ± 1.07
+82.26 ± 1.72
+All six
+Mean
+99.32 ± 0.07
+91.03 ± 0.19
+83.26 ± 0.53
+78.17 ± 0.91
+All six
+Geometric
+99.38 ± 0.07
+92.27 ± 0.43
+85.62 ± 0.81
+79.31 ± 1.01
+All six
+Stacking
+99.63 ± 0.04
+93.09 ± 0.28
+85.86 ± 0.79
+80.64 ± 1.44
+forgeries. The AUC tables provide ranking evidence under
+named test conditions, not a forensic decision rule.
+B. From selected heatmaps to a controlled failure analysis
+The existing qualitative gallery cannot determine whether
+a robustness gain reflects more reliable facial evidence. It
+uses two selected examples, different explanation methods,
+and incompletely resolved checkpoint choices. Independently
+normalized overlays can look similarly strong even when their
+raw attribution magnitudes differ. Moreover, zero in an already
+normalized RGB tensor is not the same baseline as a black
+image. A model comparison must specify this choice rather
+than treat every zero baseline as equivalent.
+The accompanying explainability implementation provides a
+route to a more controlled study, but its unexecuted controls
+are not counted as results here. One protocol fixes a shared
+64-image diagnostic cohort, with 16 true positives, false
+negatives, true negatives, and false positives according to a
+single reference detector. Every other detector is evaluated
+on those same images, retaining its own outcome rather
+than being forced into the reference’s strata. This design
+supports inspecting disagreements, not estimating population
+error prevalence.
+A second comparison should hold image identity fixed
+across clean and degraded views and test whether explanations
+change when a prediction is repaired or regresses. RGB
+maps must remain in spatial coordinates, and pure-frequency
+maps in frequency coordinates. IG requires declared baselines
+and convergence residuals; Grad-CAM requires the specified
+layer and target [13], [14]. Parameter-dependence checks and
+perturbation controls are needed before visually plausible
+localization is interpreted as faithfulness [15]. The intersection
+of errors across a fixed detector roster can then identify
+persistent cases, with complete coverage and matched controls,
+rather than selected dramatic failures.
+C. Limits of the released experiment collection
+There are four principal limits. The first is provenance: the
+numerical aggregation is reproducible, but complete image
+coverage, historical initialization, and run-time overrides cannot
+be certified for every exported AUC. The second is comparison
+design: pairing seeds improves bookkeeping but does not
+remove differences in architecture, pretraining, augmentation
+policy, or compute budget. The third is external validity: the
+DF40-derived subset lacks the membership needed to establish
+official-protocol equivalence or person/source independence.
+The fourth is statistical scope: five-seed dispersion does not
+quantify uncertainty over correlated images, repeated identities,
+or future forgery methods.
+These limits also explain why we do not add a state-of-
+the-art comparison by copying published AUCs. The MFFI
+baseline study, frozen-feature detectors, frequency-debiasing
+methods, and video-forensic systems use different training data,
+processing, or aggregation [3], [4], [10], [21]. Their scores
+are relevant context, not matched observations in our table.
+Similarly, the robustness studied here is performance on a fixed
+degraded condition. It is not a certified bound or an evaluation
+against an adaptive adversary designed for each checkpoint.
+D. Reproducibility and responsible use
+The analysis release includes source identities, all primary
+seed records, aggregation rules, generated tables, and the vector
+figure [8]. Its fixed seed population is separate from secondary
+aggregates and qualitative illustrations. Original reports and the
+
+
+preceding manuscript remain available; incompatible cohorts
+and unverified label corrections are not silently combined into
+new empirical claims.
+No new face images are synthesized or redistributed by this
+analysis. Dataset access and reuse remain subject to the original
+providers’ conditions. Detector outputs should not be used alone
+to accuse an individual of deception, and these experiments do
+not establish demographic parity or suitability for consequential
+automated decisions. The purpose is to improve the precision of
+benchmark conclusions and the design of subsequent validation,
+not to turn a research score into a guarantee of authenticity.
+VII. CONCLUSION
+We analyzed a complete 210-configuration spatial–spectral
+matrix and 30 seed-matched robust RGB runs, keeping clean
+testing, degraded testing, and recorded dataset transfer distinct.
+Robust training improves Test-D AUC in every included
+architecture–seed pair, yet transfer decreases for some families,
+most clearly Xception. Pure-frequency inputs remain weak
+under the released pipeline, while hybrid gains depend on
+architecture. Separate ensemble records show why adding
+models is not a substitute for verifying complementary evidence.
+The central lesson is therefore not that one representation is
+universally reliable, but that reliability claims must name the
+shift they survive. Reproducible seed reconciliation and explicit
+provenance make that conclusion stronger than an apparently
+superior score assembled from incompatible settings.
+ACKNOWLEDGMENT
+ChatGPT (OpenAI) assisted literature organization, drafting
+and restructuring throughout the manuscript, and development
+of the scripts for Tables I–V and Fig. 1. Primary numerical
+values are recomputed from released experiment records and
+independently checked by a separate aggregation implementa-
+tion; no detector measurements or experimental observations
+were synthesized.
+REFERENCES
+[1] J. Frank, T. Eisenhofer, L. Schönherr, A. Fischer, D. Kolossa, and T. Holz,
+“Leveraging frequency analysis for deep fake image recognition,” in Int.
+Conf. Mach. Learn. (ICML), ser. Proc. Mach. Learn. Res., vol. 119, 2020,
+pp. 3247–3258.
+[2] S.-Y. Wang, O. Wang, R. Zhang, A. Owens, and A. A. Efros, “CNN-
+generated images are surprisingly easy to spot... for now,” in Proc.
+IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR), 2020, pp.
+8695–8704.
+[3] U. Ojha, Y. Li, and Y. J. Lee, “Towards universal fake image detectors
+that generalize across generative models,” in Proc. IEEE/CVF Conf.
+Comput. Vis. Pattern Recognit. (CVPR), 2023, pp. 24 480–24 489.
+[4] C. Miao, Y. Zhang, M. Luo et al., “MFFI: Multi-dimensional face
+forgery image dataset for real-world scenarios,” in Proc. ACM Int. Conf.
+Multimedia (ACM MM), 2025, pp. 13 235–13 242.
+[5] Z. Yan, T. Yao, S. Chen et al., “DF40: Toward next-generation deepfake
+detection,” in Adv. Neural Inf. Process. Syst., vol. 37, 2024, pp. 29 387–
+29 434.
+[6] P. W. Koh, S. Sagawa, H. Marklund et al., “WILDS: A benchmark of
+in-the-wild distribution shifts,” in Int. Conf. Mach. Learn. (ICML), ser.
+Proc. Mach. Learn. Res., vol. 139, 2021, pp. 5637–5664.
+[7] L. Cunha, L. Sotomaior, L. Gasperin, B. Caldas, E. Pianovski, and
+R. Laroca, “Benchmarking spatial, spectral, and self-supervised cues
+for face forgery detection under realistic degradation,” arXiv preprint
+arXiv:2609.01511, 2026.
+[8] ——, “FaceForgery-Benchmark: Released experiment records and
+reproducible reanalysis,” 2026, source snapshot d156d7789728; analysis
+in paper/rewrite, September 23. [Online]. Available: https://github.com/
+Lucas-PG/FaceForgery-Benchmark/tree/paper-rewrite-20260923
+[9] Z. Yan, Y. Zhang, X. Yuan, S. Lyu, and B. Wu, “DeepfakeBench: A
+comprehensive benchmark of deepfake detection,” in Adv. Neural Inf.
+Process. Syst., vol. 36, 2023, pp. 4534–4565.
+[10] H. Kashiani, N. A. Talemi, and F. Afghah, “FreqDebias: Towards gener-
+alizable deepfake detection via consistency-driven frequency debiasing,”
+in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR), 2025,
+pp. 8775–8785.
+[11] A. Radford, J. W. Kim, C. Hallacy et al., “Learning transferable visual
+models from natural language supervision,” in Int. Conf. Mach. Learn.
+(ICML), ser. Proc. Mach. Learn. Res., vol. 139, 2021, pp. 8748–8763.
+[12] O. Siméoni, H. V. Vo, M. Seitzer et al., “DINOv3,” arXiv preprint
+arXiv:2508.10104, 2025.
+[13] M. Sundararajan, A. Taly, and Q. Yan, “Axiomatic attribution for deep
+networks,” in Int. Conf. Mach. Learn. (ICML), ser. Proc. Mach. Learn.
+Res., vol. 70, 2017, pp. 3319–3328.
+[14] R. R. Selvaraju, M. Cogswell, A. Das, R. Vedantam, D. Parikh, and
+D. Batra, “Grad-CAM: Visual explanations from deep networks via
+gradient-based localization,” in Proc. IEEE Int. Conf. Comput. Vis.
+(ICCV), 2017, pp. 618–626.
+[15] J. Adebayo, J. Gilmer, M. Muelly, I. Goodfellow, M. Hardt, and B. Kim,
+“Sanity checks for saliency maps,” in Adv. Neural Inf. Process. Syst.,
+vol. 31, 2018.
+[16] F. Doshi-Velez and B. Kim, “Towards a rigorous science of interpretable
+machine learning,” arXiv preprint arXiv:1702.08608, 2017.
+[17] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image
+recognition,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR),
+2016, pp. 770–778.
+[18] A. Howard, M. Sandler, G. Chu et al., “Searching for MobileNetV3,” in
+Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV), 2019, pp. 1314–1324.
+[19] F. Chollet, “Xception: Deep learning with depthwise separable convo-
+lutions,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR),
+2017, pp. 1251–1258.
+[20] A. Dosovitskiy, L. Beyer, A. Kolesnikov et al., “An image is worth
+16x16 words: Transformers for image recognition at scale,” in Int. Conf.
+Learn. Represent. (ICLR), 2021.
+[21] Y. Li, X. Yang, P. Sun, H. Qi, and S. Lyu, “Celeb-DF: A large-scale
+challenging dataset for DeepFake forensics,” in Proc. IEEE/CVF Conf.
+Comput. Vis. Pattern Recognit. (CVPR), 2020, pp. 3207–3216.

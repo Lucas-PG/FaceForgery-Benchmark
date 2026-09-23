@@ -1,0 +1,169 @@
+{
+  "upstream_commit": "d156d77897288816f6b619d577cc77d374ea0013",
+  "sources": {
+    "tables/results_seed_level.csv": {
+      "git_blob": "3ee8b44aa5b271cfd224111bcade73f8ed59b375",
+      "sha256": "b2e722502f4400fe008b6fc91fb5ffbe508f850709c47334883a853d79546775",
+      "rows": 210,
+      "columns": [
+        "model_family",
+        "fourier_mode",
+        "regime",
+        "seed",
+        "test_auc",
+        "test_acc",
+        "test_f1",
+        "test_precision",
+        "test_recall",
+        "test_specificity",
+        "test_d_auc",
+        "test_d_acc",
+        "test_d_f1",
+        "test_d_precision",
+        "test_d_recall",
+        "test_d_specificity",
+        "delta_auc",
+        "delta_acc"
+      ]
+    },
+    "tables/robust_5seeds_gpu0.csv": {
+      "git_blob": "e8adcad3fa3d76a2d5d41b340de7cca8d331e126",
+      "sha256": "4c93727c045700c9714bb997218a423d520c6d7fe9f074d9d338b0dd2deb36ae",
+      "rows": 15,
+      "columns": [
+        "model_family",
+        "seed",
+        "regime",
+        "val_auc",
+        "test_auc",
+        "test_acc",
+        "test_f1",
+        "test_d_auc",
+        "test_d_acc",
+        "test_d_f1",
+        "df40_auc",
+        "delta_auc",
+        "elapsed_min",
+        "cached"
+      ]
+    },
+    "tables/robust_5seeds_gpu1.csv": {
+      "git_blob": "f883aaac982785431dca62aa75562ee4b4624cfc",
+      "sha256": "5b7e7d3248c3515ca5c40b795ea1acb0b56d9f435e9ef26272460c3a5ba53bf7",
+      "rows": 15,
+      "columns": [
+        "model_family",
+        "seed",
+        "regime",
+        "val_auc",
+        "test_auc",
+        "test_acc",
+        "test_f1",
+        "test_d_auc",
+        "test_d_acc",
+        "test_d_f1",
+        "df40_auc",
+        "delta_auc",
+        "elapsed_min",
+        "cached"
+      ]
+    },
+    "tables/df40_all_runs_individual.csv": {
+      "git_blob": "613fdf5edb9697e652b6ba60effab9c2c7860244",
+      "sha256": "694afc737058e9e0cdcecddeeb5e29d3ea4ca340d7934863669a07c0c319cba0",
+      "rows": 230,
+      "columns": [
+        "auc",
+        "acc",
+        "f1",
+        "precision",
+        "recall",
+        "specificity",
+        "loss",
+        "threshold",
+        "model_family",
+        "fourier_mode",
+        "regime",
+        "seed",
+        "run_name"
+      ]
+    },
+    "tables/ensemble_robust_canonical_5seeds.csv": {
+      "git_blob": "87021032f691dc246c99b17fd432df16d046110a",
+      "sha256": "d0502bb6ed4814e8b3671e031953eee6db7d024c3e5f195fa45f880ebcd2888f",
+      "rows": 73,
+      "columns": [
+        "type",
+        "k",
+        "id",
+        "label",
+        "members",
+        "strategy",
+        "n_seeds",
+        "val_auc_m",
+        "val_auc_s",
+        "val_acc_m",
+        "val_acc_s",
+        "test_auc_m",
+        "test_auc_s",
+        "test_acc_m",
+        "test_acc_s",
+        "test_f1_m",
+        "test_f1_s",
+        "test_d_auc_m",
+        "test_d_auc_s",
+        "test_d_acc_m",
+        "test_d_acc_s",
+        "test_d_f1_m",
+        "test_d_f1_s",
+        "delta_auc_m",
+        "delta_auc_s",
+        "df40_auc_m",
+        "df40_auc_s"
+      ]
+    },
+    "tables/celeb_df_robust_ensembles.csv": {
+      "git_blob": "f8a79d8555e3c7a13cead57ff296e912e6ff8e54",
+      "sha256": "6eb468b325c430f9c17a069c4735c0c04c51f25976612dc5aaec1628f57372b9",
+      "rows": 18,
+      "columns": [
+        "Ensemble",
+        "Fusão",
+        "Frame AUC (%)",
+        "Frame ACC (%)",
+        "Video AUC (%)",
+        "Video ACC (%)",
+        "Video F1 (%)"
+      ]
+    },
+    "data/raw/train.csv": {
+      "git_blob": "179a97078fe5d8cdae9003df55682271d94ff364",
+      "sha256": "a983574dddad246f1cf53101496ed89eda98922663139caa199c96636ab41f62",
+      "rows": 524429,
+      "columns": [
+        "img_name",
+        "target"
+      ]
+    },
+    "data/raw/val.csv": {
+      "git_blob": "99d2a7ce82734baa8f070c304926dd1766ce042b",
+      "sha256": "39980cfcff6d9d99407b6dcb37c2cacbfac7cd896b0fb8740b0374aa4dd69b4d",
+      "rows": 147363,
+      "columns": [
+        "img_name",
+        "target"
+      ]
+    },
+    "data/raw/test.csv": {
+      "git_blob": "cde9664d2d839526ffa571d29625d869a43f7929",
+      "sha256": "611a03967e7bb237206f50342c49d382589eb9877ebc712a3c3c61dcb24f2397",
+      "rows": 181947,
+      "columns": [
+        "img_name",
+        "target"
+      ]
+    }
+  },
+  "unit": "AUC CSVs use fractions; TeX uses percent and gains use percentage points",
+  "precision": "Robust per-seed CSVs are rounded to four decimal places; aggregation cannot restore omitted precision."
+}
