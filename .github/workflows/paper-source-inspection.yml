@@ -2,7 +2,7 @@ name: Inspect pinned paper evidence
 on:
   push:
     branches: [paper-rewrite-20260923]
-    paths: ['.github/workflows/paper-source-inspection.yml']
+    paths: ['.github/workflows/paper-source-inspection.yml', 'paper/rewrite/inspect_evidence.py']
 permissions:
   contents: read
 jobs:
@@ -15,36 +15,5 @@ jobs:
         with:
           persist-credentials: false
       - run: python -m pip install -q pymupdf pandas scikit-learn
-      - name: Inventory and verify available source records
-        run: |
-          python - <<'PY'
-          import pathlib, subprocess, json, hashlib
-          import fitz
-          root=pathlib.Path('.')
-          names=subprocess.check_output(['git','ls-files'],text=True).splitlines()
-          print('PINNED UPSTREAM d156d77897288816f6b619d577cc77d374ea0013')
-          print('\nAGENT INSTRUCTIONS')
-          for n in names:
-              if pathlib.Path(n).name=='AGENTS.md': print(n,pathlib.Path(n).read_text())
-          print('\nRESEARCH / RESULTS / PAPER / DATA / SCRIPT INVENTORY')
-          for n in names:
-              if n.startswith(('paper/','results/','tables/','research/','docs/','data/','scripts/')) and not n.endswith(('.png','.jpg','.jpeg','.pdf','.svg')):
-                  print(n,pathlib.Path(n).stat().st_size)
-          print('\nROOT NOTEBOOKS AND SUMMARY RECORDS')
-          for n in names:
-              if '/' not in n and n.endswith(('.md','.csv','.ipynb')): print(n,pathlib.Path(n).stat().st_size)
-          print('\nRECENT EXECUTIVE / AUDIT TEXT')
-          for n in names:
-              if n.endswith(('.md','.json','.csv')) and any(t in n.lower() for t in ('executiv','resumo','audit','consolidad','paper_result','final_result')) and pathlib.Path(n).stat().st_size<35000:
-                  print('\n=== '+n+' ===\n'+pathlib.Path(n).read_text()[:35000])
-          print('\nPDF ACTUAL CONTENT')
-          p=root/'paper/six-page/main.pdf'
-          d=fitz.open(p)
-          print('PDF PAGES',len(d),'SHA256',hashlib.sha256(p.read_bytes()).hexdigest())
-          for i,page in enumerate(d):
-              print('\n=== PDF PAGE',i+1,'SIZE',page.rect,'===\n'+page.get_text())
-          print('\nSMALL SUMMARY CSVs')
-          for n in names:
-              if n.endswith('.csv') and ('robust' in n.lower() or 'audit' in n.lower() or 'celeb' in n.lower()) and pathlib.Path(n).stat().st_size<14000:
-                  print('\n=== '+n+' ===\n'+pathlib.Path(n).read_text())
-          PY
+      - name: Read actual seed records and reconcile methods
+        run: python paper/rewrite/inspect_evidence.py
