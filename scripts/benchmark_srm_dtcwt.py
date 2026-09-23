@@ -248,87 +248,123 @@ def main():
     plt.close()
     print(f"[✓] Comparativo DWT vs DTCWT salvo em: {p3_path}")
 
-    # --- 5. Teste de Adaptação dos Modelos do Repositório (ResNet, MobileNet, Xception) ---
-    print("\n--- 5. Teste de Adaptação dos Modelos do Repositório ---", flush=True)
+    # --- 5. Teste de Adaptação dos Modelos em 5 Sementes Canônicas (42, 123, 2024, 7, 2025) ---
+    print("\n--- 5. Teste de Adaptação dos Modelos em 5 Sementes Canônicas (42, 123, 2024, 7, 2025) ---", flush=True)
     runs = discover_trained_runs(models_root())
     
     architectures = ["resnet", "mobilenet", "xception"]
-    model_eval_results = []
+    target_seeds = [42, 123, 2024, 7, 2025]
+    per_seed_results = []
+    summary_results = []
 
     for arch in architectures:
-        cands = [r for r in runs if r.model_family == arch and ("robust" in str(r.run_dir) or r.seed == 987)]
-        r = cands[0]
-        
-        # 1. Modelo Baseline RGB (3 canais)
-        m_rgb = load_model_from_run(r, device).eval()
-        
-        # 2. Modelo Adaptado para SRM (6 canais: RGB + 3 SRM)
-        m_srm = load_model_from_run(r, device).eval()
-        if arch == "resnet":
-            m_srm.conv1 = adapt_conv2d_channels(m_srm.conv1, 6)
-        elif arch == "mobilenet":
-            m_srm.features[0][0] = adapt_conv2d_channels(m_srm.features[0][0], 6)
-        elif arch == "xception":
-            m_srm.backbone.conv1 = adapt_conv2d_channels(m_srm.backbone.conv1, 6)
+        print(f"\nAvaliando arquitetura {arch.upper()} nas 5 sementes canônicas...", flush=True)
+        arch_fps_rgb = []
+        arch_fps_srm = []
+        arch_fps_dtcwt = []
+
+        for seed in target_seeds:
+            cands = [r for r in runs if r.model_family == arch and r.seed == seed]
+            if not cands:
+                raise RuntimeError(f"Checkpoint para {arch} seed {seed} não encontrado!")
+            r = cands[0]
+
+            # 1. Modelo Baseline RGB (3 canais)
+            m_rgb = load_model_from_run(r, device).eval()
             
-        # 3. Modelo Adaptado para DTCWT (9 canais: RGB + 6 DTCWT)
-        m_dtcwt = load_model_from_run(r, device).eval()
-        if arch == "resnet":
-            m_dtcwt.conv1 = adapt_conv2d_channels(m_dtcwt.conv1, 9)
-        elif arch == "mobilenet":
-            m_dtcwt.features[0][0] = adapt_conv2d_channels(m_dtcwt.features[0][0], 9)
-        elif arch == "xception":
-            m_dtcwt.backbone.conv1 = adapt_conv2d_channels(m_dtcwt.backbone.conv1, 9)
+            # 2. Modelo Adaptado para SRM (6 canais: RGB + 3 SRM)
+            m_srm = load_model_from_run(r, device).eval()
+            if arch == "resnet":
+                m_srm.conv1 = adapt_conv2d_channels(m_srm.conv1, 6)
+            elif arch == "mobilenet":
+                m_srm.features[0][0] = adapt_conv2d_channels(m_srm.features[0][0], 6)
+            elif arch == "xception":
+                m_srm.backbone.conv1 = adapt_conv2d_channels(m_srm.backbone.conv1, 6)
+                
+            # 3. Modelo Adaptado para DTCWT (9 canais: RGB + 6 DTCWT)
+            m_dtcwt = load_model_from_run(r, device).eval()
+            if arch == "resnet":
+                m_dtcwt.conv1 = adapt_conv2d_channels(m_dtcwt.conv1, 9)
+            elif arch == "mobilenet":
+                m_dtcwt.features[0][0] = adapt_conv2d_channels(m_dtcwt.features[0][0], 9)
+            elif arch == "xception":
+                m_dtcwt.backbone.conv1 = adapt_conv2d_channels(m_dtcwt.backbone.conv1, 9)
 
-        # Medição de Latência / Throughput (Batch=16 na RTX 3090)
-        dummy_rgb = torch.randn(16, 3, 224, 224, device=device)
-        dummy_srm = torch.randn(16, 6, 224, 224, device=device)
-        dummy_dtcwt = torch.randn(16, 9, 224, 224, device=device)
+            dummy_rgb = torch.randn(16, 3, 224, 224, device=device)
+            dummy_srm = torch.randn(16, 6, 224, 224, device=device)
+            dummy_dtcwt = torch.randn(16, 9, 224, 224, device=device)
 
-        # Warmup
-        with torch.no_grad():
-            for _ in range(5):
-                _ = m_rgb(dummy_rgb)
-                _ = m_srm(dummy_srm)
-                _ = m_dtcwt(dummy_dtcwt)
-            torch.cuda.synchronize()
+            with torch.no_grad():
+                # Warmup
+                for _ in range(3):
+                    _ = m_rgb(dummy_rgb)
+                    _ = m_srm(dummy_srm)
+                    _ = m_dtcwt(dummy_dtcwt)
+                torch.cuda.synchronize()
 
-            # Benchmark RGB
-            t0 = time.time()
-            for _ in range(20):
-                _ = m_rgb(dummy_rgb)
-            torch.cuda.synchronize()
-            fps_rgb = (16 * 20) / (time.time() - t0)
+                # RGB
+                t0 = time.time()
+                for _ in range(15):
+                    _ = m_rgb(dummy_rgb)
+                torch.cuda.synchronize()
+                fps_rgb = (16 * 15) / (time.time() - t0)
 
-            # Benchmark SRM (6 ch)
-            t0 = time.time()
-            for _ in range(20):
-                _ = m_srm(dummy_srm)
-            torch.cuda.synchronize()
-            fps_srm = (16 * 20) / (time.time() - t0)
+                # SRM
+                t0 = time.time()
+                for _ in range(15):
+                    _ = m_srm(dummy_srm)
+                torch.cuda.synchronize()
+                fps_srm = (16 * 15) / (time.time() - t0)
 
-            # Benchmark DTCWT (9 ch)
-            t0 = time.time()
-            for _ in range(20):
-                _ = m_dtcwt(dummy_dtcwt)
-            torch.cuda.synchronize()
-            fps_dtcwt = (16 * 20) / (time.time() - t0)
+                # DTCWT
+                t0 = time.time()
+                for _ in range(15):
+                    _ = m_dtcwt(dummy_dtcwt)
+                torch.cuda.synchronize()
+                fps_dtcwt = (16 * 15) / (time.time() - t0)
 
-        print(f" [✓] {arch.upper():10s} -> RGB (3C): {fps_rgb:.1f} FPS | SRM (6C): {fps_srm:.1f} FPS | DTCWT (9C): {fps_dtcwt:.1f} FPS")
-        model_eval_results.append({
+            arch_fps_rgb.append(fps_rgb)
+            arch_fps_srm.append(fps_srm)
+            arch_fps_dtcwt.append(fps_dtcwt)
+
+            per_seed_results.append({
+                "architecture": arch.upper(),
+                "seed": seed,
+                "rgb_fps": round(fps_rgb, 1),
+                "srm_6c_fps": round(fps_srm, 1),
+                "dtcwt_9c_fps": round(fps_dtcwt, 1),
+                "overhead_srm_pct": round(((fps_rgb - fps_srm) / fps_rgb) * 100, 2),
+                "overhead_dtcwt_pct": round(((fps_rgb - fps_dtcwt) / fps_rgb) * 100, 2),
+            })
+            print(f"  [Seed {seed:4d}] RGB: {fps_rgb:.1f} FPS | SRM: {fps_srm:.1f} FPS | DTCWT: {fps_dtcwt:.1f} FPS")
+
+        mean_rgb, std_rgb = np.mean(arch_fps_rgb), np.std(arch_fps_rgb)
+        mean_srm, std_srm = np.mean(arch_fps_srm), np.std(arch_fps_srm)
+        mean_dtcwt, std_dtcwt = np.mean(arch_fps_dtcwt), np.std(arch_fps_dtcwt)
+        ovh_srm = ((mean_rgb - mean_srm) / mean_rgb) * 100
+        ovh_dtcwt = ((mean_rgb - mean_dtcwt) / mean_rgb) * 100
+
+        summary_results.append({
             "architecture": arch.upper(),
-            "rgb_fps": round(fps_rgb, 1),
-            "srm_6c_fps": round(fps_srm, 1),
-            "dtcwt_9c_fps": round(fps_dtcwt, 1),
-            "overhead_srm_pct": round(((fps_rgb - fps_srm) / fps_rgb) * 100, 2),
-            "overhead_dtcwt_pct": round(((fps_rgb - fps_dtcwt) / fps_rgb) * 100, 2),
+            "seeds": "5 seeds (42, 123, 2024, 7, 2025)",
+            "rgb_fps_mean": round(mean_rgb, 1),
+            "rgb_fps_std": round(std_rgb, 1),
+            "srm_6c_fps_mean": round(mean_srm, 1),
+            "srm_6c_fps_std": round(std_srm, 1),
+            "dtcwt_9c_fps_mean": round(mean_dtcwt, 1),
+            "dtcwt_9c_fps_std": round(std_dtcwt, 1),
+            "overhead_srm_pct": round(ovh_srm, 2),
+            "overhead_dtcwt_pct": round(ovh_dtcwt, 2),
         })
 
-    df_models = pd.DataFrame(model_eval_results)
+    df_per_seed = pd.DataFrame(per_seed_results)
+    df_per_seed.to_csv(out_table_dir / "srm_dtcwt_5seeds_benchmark.csv", index=False)
+
+    df_summary = pd.DataFrame(summary_results)
     models_csv = out_table_dir / "srm_dtcwt_model_benchmarks.csv"
-    df_models.to_csv(models_csv, index=False)
-    print(f"\n[✓] Benchmarks de modelos salvos em: {models_csv}")
-    print(df_models.to_string())
+    df_summary.to_csv(models_csv, index=False)
+    print(f"\n[✓] Benchmarks consolidados nas 5 sementes salvos em: {models_csv}")
+    print(df_summary.to_string())
 
     print("\n=======================================================")
     print(" [✓] BENCHMARK EXPERIMENTAL DE DTCWT & SRM CONCLUÍDO!")
