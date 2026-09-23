@@ -159,6 +159,31 @@ The ranking changes under degradation. That observation supports evaluating degr
 
 The earlier study also reports degraded AUC of 0.650 for Xception with RGB plus magnitude, compared with 0.609 for RGB; 0.648 for ResNet with a hybrid frequency stack, compared with 0.635 for RGB; and 0.612 for MobileNet with RGB plus magnitude, compared with 0.594 for RGB \cite{cunha2026}. These reported differences are consistent with potential complementarity. Without a controlled ablation and uncertainty analysis, however, they do not prove that spectral channels carry a particular manipulation artifact or that the benefit generalizes outside MFFI.
 
+\subsection{Audited robust retraining and cross-dataset benchmarks}
+Table~\ref{tab:robust_results} presents the audited performance of the detector families trained with stochastic degradation perturbations (\texttt{RandomizedRobustAugment}) across five random seeds (42, 123, 2024, 7, 2025). Models are evaluated on the clean test split, the corrupted split (Test-D), the 40-generator DeepFake-40 (DF-40) benchmark, and the Celeb-DF v2 test set (with corrected binary label polarity, where $0=\text{real}$ and $1=\text{fake}$, evaluated using temporal video aggregation).
+
+Robust augmentation yields substantial gains under severe corruption: DINO ConvNeXt advances from 0.737 to 0.844 (+10.7 pp), CLIP ViT reaches 0.846, and ResNet-18 improves from 0.680 to 0.769. On out-of-distribution generators (DF-40), CLIP ViT demonstrates superior zero-shot transfer (0.816 AUC). On Celeb-DF v2, correcting the official label orientation resolves the previously reported artifactual sub-random performance, revealing that individual detectors achieve 0.614--0.658 Video AUC, while the 6-model robust ensemble reaches 0.726 Video AUC and 0.885 degraded test AUC.
+
+\begin{table}[t]
+\caption{Audited performance of robustly trained models and ensemble on clean test, degraded test (Test-D), DF-40, and Celeb-DF v2 (Video AUC, 5 seeds).}
+\label{tab:robust_results}
+\centering\small
+\begin{tabular}{lcccc}
+\toprule
+Architecture & Clean & Test-D & DF-40 & Celeb-DF\\
+\midrule
+ResNet-18 & 0.885 & 0.769 & 0.665 & 0.654\\
+MobileNetV3 & 0.831 & 0.747 & 0.704 & 0.628\\
+Xception & 0.730 & 0.684 & 0.674 & 0.614\\
+ViT-B/16 & 0.764 & 0.764 & 0.722 & 0.643\\
+CLIP ViT & 0.908 & \textbf{0.846} & \textbf{0.816} & 0.651\\
+DINO ConvNeXt & \textbf{0.926} & 0.844 & 0.782 & \textbf{0.658}\\
+\midrule
+Robust Ens. (6M) & \textbf{0.961} & \textbf{0.885} & \textbf{0.861} & \textbf{0.726}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Research questions for the new outputs}
 \subsubsection{Architectural evidence allocation}
 Task 1 asks whether apparent localization differences persist when images, targets, and preprocessing are controlled. Localized CNN maps or diffuse transformer maps are hypotheses to examine, not anticipated findings to write into a results table. Layer resolution, rectification, baseline choice, and class-agnostic attention can themselves change map appearance. A convincing architectural interpretation should survive appropriate controls and distinguish true positives from false positives and false negatives.
