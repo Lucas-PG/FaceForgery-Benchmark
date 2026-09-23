@@ -122,6 +122,8 @@ def _read_run_config(run: TrainedRun) -> dict:
 def config_from_run(run: TrainedRun) -> TrainingConfig:
     allowed = {field.name for field in fields(TrainingConfig)}
     raw_cfg = _read_run_config(run)
+    # Preserve unversioned historical constructors, especially Xception/CLIP/ViT.
+    raw_cfg.setdefault("initialization_contract", "legacy-v1")
     values = {
         key: _coerce(key, value) for key, value in raw_cfg.items()
         if key in allowed and not (isinstance(value, float) and np.isnan(value))

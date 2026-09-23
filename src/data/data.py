@@ -145,12 +145,7 @@ class ImageDataset(Dataset):
                     img = self.spatial_transform(img)
 
         except Exception as e:
-            print(f"Erro na imagem: {img_path} -> {e}")
-            if _skip_count + 1 >= len(self):
-                raise RuntimeError(
-                    "Nenhuma imagem pôde ser carregada (verifique caminhos no CSV e no disco)."
-                ) from e
-            return self.__getitem__((idx + 1) % len(self), _skip_count=_skip_count + 1)
+            raise RuntimeError(f"Unreadable image at original index {idx}: {img_path}; substitution is forbidden") from e
 
         label = self.df.iloc[idx, 1]
 
