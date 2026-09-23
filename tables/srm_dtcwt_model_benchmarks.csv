@@ -1,0 +1,4 @@
+architecture,rgb_fps,srm_6c_fps,dtcwt_9c_fps,overhead_srm_pct,overhead_dtcwt_pct
+RESNET,3958.6,3818.2,3807.2,3.55,3.82
+MOBILENET,5103.3,5069.5,5035.3,0.66,1.33
+XCEPTION,1123.9,1121.0,1115.5,0.26,0.75
