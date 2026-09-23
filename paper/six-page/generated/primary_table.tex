@@ -1,0 +1,14 @@
+\begin{tabular}{lccccc}
+\toprule
+Model & \multicolumn{2}{c}{Clean test AUC (\%)} & \multicolumn{2}{c}{Test-D AUC (\%)} & Test-D gain (pp) \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+ & Standard & Robust & Standard & Robust & Paired difference \\
+\midrule
+ResNet-18 & $88.45 \pm 1.13$ & $84.87 \pm 0.84$ & $66.47 \pm 0.87$ & $76.90 \pm 0.73$ & $+10.42 \pm 1.07$ \\
+MobileNetV3-L & $84.70 \pm 0.24$ & $83.12 \pm 0.65$ & $67.00 \pm 0.52$ & $74.89 \pm 0.64$ & $+7.89 \pm 0.78$ \\
+Xception & $77.29 \pm 0.42$ & $75.45 \pm 0.14$ & $62.97 \pm 0.13$ & $68.50 \pm 0.41$ & $+5.53 \pm 0.36$ \\
+ViT-B/16 & $81.43 \pm 0.94$ & $82.27 \pm 0.54$ & $69.25 \pm 0.84$ & $76.39 \pm 0.51$ & $+7.14 \pm 1.06$ \\
+CLIP ViT-B/16 & $91.95 \pm 0.41$ & $90.75 \pm 0.15$ & $74.89 \pm 1.03$ & $84.53 \pm 0.24$ & $+9.65 \pm 1.15$ \\
+DINOv3 ConvNeXt-B & $93.58 \pm 0.62$ & $92.69 \pm 1.02$ & $71.47 \pm 1.15$ & $84.44 \pm 1.95$ & $+12.96 \pm 1.69$ \\
+\bottomrule
+\end{tabular}
