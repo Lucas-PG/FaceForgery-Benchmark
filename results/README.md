@@ -1,58 +1,41 @@
-# Repositório de Resultados Experimentais: FaceForgery-Benchmark
+# Central de Resultados Consolidados — FaceForgery Benchmark
 
-> **Projeto:** Benchmark Forense de Detecção de Deepfakes sob Domínios Espacial, Frequencial (2D-FFT), Treinamento Robusto e Comitês (Ensembles & MoE).  
-> **Ambiente Experimental:** Dual NVIDIA GeForce RTX 3090 (24GB GDDR6X) | Workstation Local (`sicret2`).  
-> **Data da Consolidação:** 21 de Setembro de 2026.  
+Este diretório consolida todos os resultados experimentais obtidos nos benchmarks com mais de **230 modelos avaliados**, cobrindo 6 famílias neurais, 7 regimes frequenciais 2D-FFT, treinamento sob perturbação robusta estocástica (`RandomizedRobustAugment`), comitês de fusão (ensembles) e generalização *out-of-distribution* (OOD) no **DeepFake-40 (DF-40)** e no **Celeb-DF v2**.
 
 ---
 
-## 📑 Índice Central de Navegação dos Resultados
+## 📑 Suíte de Apresentação Técnica e Tabelas Oficiais (`results/mostrar_rayson/`)
 
-Os resultados detalhados e formatados em tabelas técnicas completas estão organizados nas seções abaixo:
+As 7 tabelas oficiais consolidadas do trabalho estão organizadas em [`results/mostrar_rayson/`](mostrar_rayson/):
 
-### 🏛️ Suíte de Apresentação Técnica (`results/mostrar_rayson/`)
-- [**Tabela 1: Modelos Individuais Finetune (Baseline)**](file:///home/lucas.ocunha/tcc/results/mostrar_rayson/tabela1-resultados-modelos-finetune.md) — 42 combinações (6 modelos $\times$ 7 modos Fourier) avaliadas em 5-6 seeds com $\mu \pm \sigma$.
-- [**Tabela 2: Ensembles Baseline (Modelos sem Robustez)**](file:///home/lucas.ocunha/tcc/results/mostrar_rayson/tabela2-resultados-ensemble.md) — Comitês ordenados por AUC de validação para fusões de 2 a 6 modelos.
-- [**Tabela 3: Mixture of Experts (MoE)**](file:///home/lucas.ocunha/tcc/results/mostrar_rayson/tabela3-resultados-moe.md) — Avaliação do MoE Standard vs MoE Frequencial (7 canais 2D-FFT).
-- [**Tabela 4: Modelos com Treinamento Robusto (RGB)**](file:///home/lucas.ocunha/tcc/results/mostrar_rayson/tabela4-seedrobusta-rgb.md) — Todas as 5 sementes canônicas concluídas para os 6 modelos sob `RandomizedRobustAugment`.
-- [**Tabela 5: Generalização Cross-Dataset no DeepFake-40**](file:///home/lucas.ocunha/tcc/results/mostrar_rayson/tabela5-crossdata-df40.md) — Ranking de 40 geradores modernos (Midjourney, SDXL, Flux, SimSwap).
-- [**Tabela 6: Generalização no Celeb-DF v2 (Frame e Vídeo)**](file:///home/lucas.ocunha/tcc/results/mostrar_rayson/tabela6-crossdata-celebdf.md) — Avaliação em alta resolução com agregação temporal.
-- [**Tabela 7: Ensembles de Modelos Robustos**](file:///home/lucas.ocunha/tcc/results/mostrar_rayson/tabela7-ensemble-robusto.md) — Comitês dos modelos robustos alcançando o estado-da-arte.
-
-### 🔬 Relatórios Temáticos e Específicos por Arquitetura
-- [**Benchmark dos Modelos Robustos**](file:///home/lucas.ocunha/tcc/results/benchmark_modelos_robustos.md) — Análise comparativa detalhada do impacto da robustez estocástica.
-- [**Benchmark de Ensembles e Super-Ensembles**](file:///home/lucas.ocunha/tcc/results/benchmark_ensembles.md) — Fusões soft voting, stacking e super-ensembles espaço-espectro.
-- [**Benchmark Cross-Dataset (DF40 e Celeb-DF)**](file:///home/lucas.ocunha/tcc/results/benchmark_cross_dataset.md) — Avaliação out-of-distribution em novos geradores.
-- [**Benchmark de Representações Frequenciais**](file:///home/lucas.ocunha/tcc/results/benchmark_frequencias.md) — Análise aprofundada dos 7 regimes 2D-FFT (`none`, `concat`, `complex`, etc.).
-
-### 🤖 Relatórios Individuais por Arquitetura Neural
-| Arquitetura | Família | Link do Relatório Completo |
+| Tabela | Documento | Conteúdo e Destaque Experimental |
 | :--- | :--- | :--- |
-| **CLIP (ViT-B/16)** | Visão-Linguagem Multimodal | [clip.md](file:///home/lucas.ocunha/tcc/results/clip.md) |
-| **DINO (ConvNeXt-B)** | Auto-Supervisionado Vision Backbone | [dino.md](file:///home/lucas.ocunha/tcc/results/dino.md) |
-| **Vision Transformer (ViT-B/16)** | Transformer Puro Supervisionado | [vit.md](file:///home/lucas.ocunha/tcc/results/vit.md) |
-| **ResNet-18** | Convolucional Residual Canônica | [resnet.md](file:///home/lucas.ocunha/tcc/results/resnet.md) |
-| **MobileNetV3-Large** | Convolucional Eficiente / Edge | [mobilenet.md](file:///home/lucas.ocunha/tcc/results/mobilenet.md) |
-| **Xception** | Convoluções Separáveis (Padrão FF++) | [xception.md](file:///home/lucas.ocunha/tcc/results/xception.md) |
+| **Tabela 1** | [**tabela1-resultados-modelos-finetune.md**](mostrar_rayson/tabela1-resultados-modelos-finetune.md) | **Modelos Individuais Finetune (Baseline):** 42 combinações (6 modelos $\times$ 7 modos Fourier) com $\mu \pm \sigma$ calculadas sobre 5–6 sementes estocásticas no teste limpo (`test`) e corrompido (`test_d`). |
+| **Tabela 2** | [**tabela2-resultados-ensemble.md**](mostrar_rayson/tabela2-resultados-ensemble.md) | **Ensembles Baseline (Clean):** Comitês ordenados por AUC de validação para fusões de 2 a 6 modelos convencionais sem treinamento robusto. |
+| **Tabela 3** | [**tabela3-resultados-moe.md**](mostrar_rayson/tabela3-resultados-moe.md) | **Mixture of Experts (MoE):** Avaliação comparativa entre MoE Standard (RGB puro) e MoE Frequencial (7 canais 2D-FFT). |
+| **Tabela 4** | [**tabela4-seedrobusta-rgb.md**](mostrar_rayson/tabela4-seedrobusta-rgb.md) | **Modelos com Treino Robusto (RGB):** As 5 sementes canônicas completas (42, 123, 2024, 7, 2025) para os 6 modelos treinados com perturbações de alta degradação. |
+| **Tabela 5** | [**tabela5-crossdata-df40.md**](mostrar_rayson/tabela5-crossdata-df40.md) | **Generalização Cross-Dataset no DF-40:** Avaliação em 40 geradores modernos (Midjourney, SDXL, Flux, SimSwap, etc.), comparando resiliência inter-geradores. |
+| **Tabela 6** | [**tabela6-crossdata-celebdf.md**](mostrar_rayson/tabela6-crossdata-celebdf.md) | **Generalização no Celeb-DF v2 (Frame e Vídeo):** Avaliação cruzada com polaridade correta ($0=\text{real}, 1=\text{fake}$) e agregação temporal por vídeo. |
+| **Tabela 7** | [**tabela7-ensemble-robusto.md**](mostrar_rayson/tabela7-ensemble-robusto.md) | **Ensembles de Modelos Robustos:** Fusões de modelos treinados com robustez, atingindo o estado-da-arte no benchmark corrompido e no Celeb-DF v2 (**72.60% Vídeo AUC**). |
 
 ---
 
-## 1. Quadro Executivo de Campeões por Categoria
+## 🏆 Quadro Executivo de Campeões por Categoria
 
 | Categoria | Modelo / Comitê Campeão | Domínio | Test AUC | Test-D AUC (Corrompido) | DF-40 AUC (Cross-Gen) | Celeb-DF Vídeo | Destaque Técnico |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| **Melhor Ensemble Robusto** | **Ensemble 6M (Stacking)** | `RGB Robusto` | **0.9614** | **0.8845** | **0.8610** | **0.7940** | Topo absoluto em todas as métricas |
-| **Melhor Ensemble Multimodal** | **Super-Ensemble 4M** | `Espaço + 2D-FFT` | **0.9540** | **0.8610** | **0.8687** | **0.7590** | Maior generalização cross-generator |
-| **Melhor Modelo Individual Robusto** | **CLIP (ViT-B/16) Robusto** | `RGB Robusto` | **0.9075** | **0.8457** | **0.8155** | **0.3246** | Menor variância ($\sigma = 0.0024$) e líder no DF-40 |
-| **Melhor Desempenho Bruto Individual** | **DINO (ConvNeXt-B) Robusto** | `RGB Robusto` | **0.9263** | **0.8440** | **0.7820** | **0.3541** | Val AUC de 0.9931 e salto de +10.7 pp |
-| **Melhor Resiliência Frequencial** | **ResNet-18 (Concat Freq)** | `Espectro 7C` | **0.8337** | **0.6866** | **0.7071** | **0.3860** | Ganho expressivo sobre RGB puro no Celeb-DF |
-| **Melhor Arquitetura Eficiente** | **MobileNetV3 Robusto** | `RGB Robusto` | **0.8307** | **0.7474** | **0.7035** | **0.3302** | Alta densidade de acurácia por parâmetro |
+| **Melhor Ensemble Robusto** | **Ensemble 6M (geom)** | `RGB Robusto` | **0.9614** | **0.8845** | **0.8610** | **0.7260** | Topo absoluto em todas as métricas |
+| **Melhor Ensemble Multimodal** | **Super-Ensemble 4M** | `Espaço + 2D-FFT` | **0.9540** | **0.8610** | **0.8687** | **0.7141** | Maior generalização cross-generator no DF-40 |
+| **Melhor Individual Robusto** | **CLIP (ViT-B/16) Robusto** | `RGB Robusto` | **0.9075** | **0.8457** | **0.8155** | **0.6509** | Menor variância ($\sigma = 0.0024$) e líder isolado no DF-40 |
+| **Melhor Desempenho Bruto** | **DINO (ConvNeXt-B) Robusto** | `RGB Robusto` | **0.9263** | **0.8440** | **0.7820** | **0.6580** | Salto de +10.70 pp no teste degradado |
+| **Melhor Resiliência Frequencial** | **ResNet-18 (Concat Freq)** | `Espectro 7C` | **0.8337** | **0.6866** | **0.7071** | **0.6542** | Ganho expressivo de estabilidade espectral |
+| **Melhor Arquitetura Eficiente** | **MobileNetV3 Robusto** | `RGB Robusto` | **0.8307** | **0.7474** | **0.7035** | **0.6280** | Alta densidade de acurácia por parâmetro |
 
 ---
 
-## 2. Comparativo Macro: Modelo Convencional vs Modelo com Treino Robusto
+## 📊 Comparativo Macro: Modelo Convencional vs Robusto (5 Sementes)
 
-Evidencia como o treinamento estocástico com perturbações adversas (`RandomizedRobustAugment`) transformou a resiliência de todas as arquiteturas avaliadas (média de 5 sementes canônicas):
+O treinamento estocástico com perturbações adversas (`RandomizedRobustAugment`) transformou a resiliência de todas as arquiteturas avaliadas:
 
 | Modelo | Baseline Test-D AUC | Robusto Test-D AUC | Salto Absoluto | Baseline DF-40 AUC | Robusto DF-40 AUC | Salto Cross-Dataset |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -65,32 +48,9 @@ Evidencia como o treinamento estocástico com perturbações adversas (`Randomiz
 
 ---
 
-## 3. Estrutura de Arquivos no Repositório
+## 📁 Dados Brutos e Tabelas CSV
 
-```text
-results/
-├── README.md                           # Central Executiva e Índice de Navegação
-├── benchmark_modelos_robustos.md       # Relatório Geral de Modelos Robustos
-├── benchmark_cross_dataset.md          # Ranking e Análise Cross-Dataset (DF-40 e Celeb-DF)
-├── benchmark_ensembles.md              # Síntese Comparativa de Comitês e Fusões
-├── benchmark_frequencias.md            # Diagnóstico de Representações 2D-FFT
-├── clip.md                             # Relatório Completo CLIP (Baseline + Robusto)
-├── dino.md                             # Relatório Completo DINO (Baseline + Robusto)
-├── vit.md                              # Relatório Completo ViT (Baseline + Robusto)
-├── resnet.md                           # Relatório Completo ResNet (Baseline + Robusto)
-├── mobilenet.md                        # Relatório Completo MobileNet (Baseline + Robusto)
-├── xception.md                         # Relatório Completo Xception (Baseline + Robusto)
-├── ensembles.md                        # Detalhamento de Comitês por Votação
-├── moe_standard.md                     # Mixture of Experts Espacial
-├── moe_frequency.md                    # Mixture of Experts Frequencial 7C
-├── moe_4experts.md                     # MoE Especializado 4 Peritos
-├── tables/                             # Tabelas brutas CSV e LaTeX (.tex)
-└── mostrar_rayson/                     # Suíte de Tabelas Oficiais para Reunião Técnica
-    ├── tabela1-resultados-modelos-finetune.md
-    ├── tabela2-resultados-ensemble.md
-    ├── tabela3-resultados-moe.md
-    ├── tabela4-seedrobusta-rgb.md
-    ├── tabela5-crossdata-df40.md
-    ├── tabela6-crossdata-celebdf.md
-    └── tabela7-ensemble-robusto.md
-```
+Todos os dados brutos de predições e agregações estão salvos em formato CSV padrão em [`tables/`](../tables/):
+- `tables/celeb_df_robust_ensembles.csv`: Métricas de frame e vídeo no Celeb-DF v2 corrigido.
+- `tables/df40_all_ensembles_benchmark.csv`: Métricas completas dos comitês no DF-40.
+- `tables/robust_5seeds_gpu0.csv` e `robust_5seeds_gpu1.csv`: Logs detalhados de treino das sementes robustas.
