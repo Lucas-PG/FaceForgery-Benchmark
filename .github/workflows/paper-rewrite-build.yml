@@ -1,0 +1,95 @@
+name: Build rewritten IEEE paper
+on:
+  push:
+    branches: [paper-rewrite-20260923]
+    paths:
+      - 'paper/six-page/main.tex'
+      - 'paper/six-page/references.bib'
+      - 'paper/rewrite/build_evidence.py'
+      - 'paper/rewrite/verify_paper.py'
+      - '.github/workflows/paper-rewrite-build.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: rewritten-paper-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.repository == 'Lucas-PG/FaceForgery-Benchmark' && github.ref == 'refs/heads/paper-rewrite-20260923'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install document build tools; no model runtime
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq latexmk texlive-latex-extra texlive-publishers texlive-fonts-recommended poppler-utils
+          python -m pip install -q 'numpy==2.4.4' 'pandas==3.0.2' 'matplotlib==3.10.8' 'pymupdf==1.26.4' 'pillow==12.2.0'
+          python -m pip check
+      - name: Preserve the exact supplied manuscript and regenerate evidence
+        run: |
+          set -euo pipefail
+          mkdir -p paper/rewrite/upstream
+          git show d156d77897288816f6b619d577cc77d374ea0013:paper/six-page/main.pdf > paper/rewrite/upstream/main.pdf
+          git show d156d77897288816f6b619d577cc77d374ea0013:paper/six-page/main.tex > paper/rewrite/upstream/main.tex
+          git show d156d77897288816f6b619d577cc77d374ea0013:paper/explicability/references.bib > paper/rewrite/upstream/references.bib
+          python -m py_compile paper/rewrite/build_evidence.py paper/rewrite/verify_paper.py
+          python paper/rewrite/build_evidence.py
+      - name: Compile with the standard IEEEtran double-column template
+        working-directory: paper/six-page
+        run: |
+          set -o pipefail
+          latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex 2>&1 | tee /tmp/rewritten-paper-build.log
+          cp main.pdf ../../paper.pdf
+          pdfinfo main.pdf
+          pdffonts main.pdf
+      - name: Independently check numerical claims, citations and all PDF pages
+        run: |
+          python paper/rewrite/verify_paper.py
+          python -m pip freeze > paper/rewrite/build-environment.txt
+      - name: Publish only checked document artifacts to the fork working branch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'Lucas-PG/FaceForgery-Benchmark'
+          test "$GITHUB_REF" = 'refs/heads/paper-rewrite-20260923'
+          test "$(git ls-remote origin refs/heads/paper-rewrite-20260923 | cut -f1)" = "$GITHUB_SHA"
+          python - <<'PY'
+          import json,pathlib,subprocess
+          record=json.loads(pathlib.Path('paper/six-page/build.json').read_text())
+          if record['status']!='passed' or not 6<=record['pages']<=8: raise RuntimeError('Paper is not verified')
+          files=['paper.pdf','paper/six-page/main.pdf','paper/six-page/main.txt','paper/six-page/build.json','paper/rewrite/build-environment.txt']
+          for root in ['paper/six-page/generated','paper/rewrite/upstream','paper/rewrite/preview']:
+              files += [str(p) for p in pathlib.Path(root).glob('*') if p.is_file()]
+          subprocess.check_call(['git','add','-f','--',*files])
+          staged=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          if not set(staged)<=set(files): raise RuntimeError('Unexpected file staged')
+          print('Verified document files:',staged)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git diff --cached --quiet || git commit -m 'paper: publish verified 6-8 page IEEE rewrite and reproducible evidence'
+          git push origin HEAD:refs/heads/paper-rewrite-20260923
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rewritten-paper-build
+          path: |
+            paper/six-page/main.pdf
+            paper/six-page/main.tex
+            paper/six-page/main.txt
+            paper/six-page/main.log
+            paper/six-page/build.json
+            paper/six-page/generated/
+            paper/rewrite/preview/
+            paper/rewrite/build-environment.txt
+            /tmp/rewritten-paper-build.log
+          retention-days: 30
