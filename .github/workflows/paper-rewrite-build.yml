@@ -35,9 +35,12 @@ jobs:
           sudo apt-get install -y -qq latexmk texlive-latex-extra texlive-publishers texlive-fonts-recommended poppler-utils
           python -m pip install -q 'numpy==2.4.4' 'pandas==3.0.2' 'matplotlib==3.10.8' 'pymupdf==1.26.4' 'pillow==12.2.0'
           python -m pip check
-      - name: Preserve the exact supplied manuscript and regenerate evidence
+      - name: Preserve the supplied manuscript and regenerate evidence
         run: |
           set -euo pipefail
+          if [ -f paper/rewrite/polish.py ]; then
+            python paper/rewrite/polish.py
+          fi
           mkdir -p paper/rewrite/upstream
           git show d156d77897288816f6b619d577cc77d374ea0013:paper/six-page/main.pdf > paper/rewrite/upstream/main.pdf
           git show d156d77897288816f6b619d577cc77d374ea0013:paper/six-page/main.tex > paper/rewrite/upstream/main.tex
@@ -52,31 +55,36 @@ jobs:
           cp main.pdf ../../paper.pdf
           pdfinfo main.pdf
           pdffonts main.pdf
-      - name: Independently check numerical claims, citations and all PDF pages
+      - name: Independently verify numbers, citations and every PDF page
         run: |
+          rm -f paper/rewrite/preview/page-*.png
           python paper/rewrite/verify_paper.py
           python -m pip freeze > paper/rewrite/build-environment.txt
-      - name: Publish only checked document artifacts to the fork working branch
+      - name: Publish only verified paper sources and artifacts in the fork
         run: |
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = 'Lucas-PG/FaceForgery-Benchmark'
           test "$GITHUB_REF" = 'refs/heads/paper-rewrite-20260923'
           test "$(git ls-remote origin refs/heads/paper-rewrite-20260923 | cut -f1)" = "$GITHUB_SHA"
+          if [ -f paper/rewrite/polish.py ]; then
+            git rm -- paper/rewrite/polish.py
+          fi
           python - <<'PY'
           import json,pathlib,subprocess
           record=json.loads(pathlib.Path('paper/six-page/build.json').read_text())
           if record['status']!='passed' or not 6<=record['pages']<=8: raise RuntimeError('Paper is not verified')
-          files=['paper.pdf','paper/six-page/main.pdf','paper/six-page/main.txt','paper/six-page/build.json','paper/rewrite/build-environment.txt']
-          for root in ['paper/six-page/generated','paper/rewrite/upstream','paper/rewrite/preview']:
-              files += [str(p) for p in pathlib.Path(root).glob('*') if p.is_file()]
-          subprocess.check_call(['git','add','-f','--',*files])
+          exact={'paper.pdf','paper/six-page/main.pdf','paper/six-page/main.txt','paper/six-page/build.json','paper/six-page/main.tex','paper/six-page/references.bib','paper/rewrite/build_evidence.py','paper/rewrite/build-environment.txt'}
+          roots=['paper/six-page/generated','paper/rewrite/upstream','paper/rewrite/preview']
+          subprocess.check_call(['git','add','-A','-f','--',*sorted(exact),*roots])
           staged=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
-          if not set(staged)<=set(files): raise RuntimeError('Unexpected file staged')
+          for name in staged:
+              if name not in exact and name!='paper/rewrite/polish.py' and not any(name.startswith(root+'/') for root in roots):
+                  raise RuntimeError('Unexpected staged file: '+name)
           print('Verified document files:',staged)
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git diff --cached --quiet || git commit -m 'paper: publish verified 6-8 page IEEE rewrite and reproducible evidence'
+          git diff --cached --quiet || git commit -m 'paper: publish final verified IEEE manuscript, numerical evidence and page previews'
           git push origin HEAD:refs/heads/paper-rewrite-20260923
       - uses: actions/upload-artifact@v4
         if: always()
