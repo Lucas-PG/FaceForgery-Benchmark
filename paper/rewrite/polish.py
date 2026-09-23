@@ -1,7 +1,7 @@
-"""Apply the final editorial pass to the reviewed text; no numerical edits.
+"""Apply final, exact-context editorial changes; no numerical edits.
 
-This one-time helper is removed after the guarded build commits the resulting
-source. It only changes the named manuscript, bibliography and figure builder.
+The guarded build removes this one-time helper after committing the resulting
+manuscript, bibliography, and figure-generation source.
 """
 from pathlib import Path
 
@@ -10,12 +10,12 @@ PAPER = ROOT / 'paper/six-page'
 
 
 def paragraph(text, prefix, replacement):
-    parts = text.split('\n\n')
-    indices = [i for i,p in enumerate(parts) if p.startswith(prefix)]
+    lines = text.splitlines()
+    indices = [i for i,line in enumerate(lines) if line.startswith(prefix)]
     if len(indices) != 1:
         raise ValueError('Unexpected editorial context: '+prefix)
-    parts[indices[0]] = replacement
-    return '\n\n'.join(p for p in parts if p)
+    lines[indices[0]] = replacement
+    return '\n'.join(lines)+'\n'
 
 
 def replace(text, old, new):
@@ -69,11 +69,11 @@ def main():
     path.write_text(text)
     path=ROOT/'paper/rewrite/build_evidence.py'
     text=path.read_text()
-    text=replace(text,"import matplotlib.pyplot as plt","import matplotlib.pyplot as plt\nmatplotlib.rcParams['pdf.fonttype'] = 42")
+    text=replace(text,'import matplotlib.pyplot as plt',"import matplotlib.pyplot as plt\nmatplotlib.rcParams['pdf.fonttype'] = 42")
     text=replace(text,"ax.legend(fontsize=7.7,loc='lower right',frameon=False)",
                  "ax.legend(fontsize=7.7,loc='lower left',bbox_to_anchor=(0,1.02),ncol=2,frameon=False)")
     path.write_text(text)
-    print('Editorial pass complete: redundant prose removed, venue names standardized, disclosure clarified, and vector figure typography improved.')
+    print('Final editorial and typography pass applied; numerical data and experiment records unchanged.')
 
 if __name__=='__main__':
     main()
