@@ -7,6 +7,7 @@ import subprocess
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+matplotlib.rcParams['pdf.fonttype'] = 42
 import numpy as np
 import pandas as pd
 
@@ -179,7 +180,7 @@ def main():
     ax.invert_yaxis()
     ax.set_xlabel('Robust minus standard AUC (percentage points)',fontsize=8)
     ax.tick_params(axis='x',labelsize=8)
-    ax.legend(fontsize=7.7,loc='lower right',frameon=False)
+    ax.legend(fontsize=7.7,loc='lower left',bbox_to_anchor=(0,1.02),ncol=2,frameon=False)
     ax.spines[['top','right']].set_visible(False)
     fig.tight_layout(pad=.6)
     fig.savefig(OUT/'augmentation_gains.pdf',metadata={'CreationDate':None,'ModDate':None})

@@ -1,13 +1,13 @@
 {
-  "source_commit": "16a72444880a2efeacf9894a88ab1274304cc0ba",
-  "workflow_run": "35932214167",
+  "source_commit": "ff3b359e6ecfef9707ab6a1478bbfdede8ad0d9b",
+  "workflow_run": "35932879499",
   "upstream_commit": "d156d77897288816f6b619d577cc77d374ea0013",
-  "pages": 8,
+  "pages": 7,
   "format": "IEEEtran conference, two columns, 10-point body, US Letter",
-  "pdf_sha256": "fd13be11e77fb0493cd17aba170e81362f642ffd00cc5f8d6b5d0d768e6e7c59",
-  "root_pdf_sha256": "fd13be11e77fb0493cd17aba170e81362f642ffd00cc5f8d6b5d0d768e6e7c59",
-  "source_sha256": "f8bbad8fc2a687804b0f921b432c66ad6c35d0d9763e0749f7b41e8382d730ff",
-  "bibliography_sha256": "c2fd7c81a9f947fe579e409454f4f5cc86d2fc7a661242cde7ce4485906897f4",
+  "pdf_sha256": "ce25b4fe90c73c0a9991e41d5956b18d01397517f559440d263cf281599056e7",
+  "root_pdf_sha256": "ce25b4fe90c73c0a9991e41d5956b18d01397517f559440d263cf281599056e7",
+  "source_sha256": "7583ea762d8e0cfb1203e88a6ffd9b579af7d0f041be6ade6389035a95dfaaf3",
+  "bibliography_sha256": "fd60fae6a44abf9a4413f1d34eece3599df3cf846ce492dc00f2820ac224c175",
   "upstream_pdf_sha256": "ee983c7b5d0ba6e6c88e4f1f111c93f6f2a8078193ba624da8fa485766bb424c",
   "citation_keys": [
     "adebayo2018",
@@ -44,122 +44,107 @@
   "page_layout": [
     {
       "page": 1,
-      "words": 750,
+      "words": 729,
       "bounds_pt": [
         48.51599884033203,
         53.00267028808594,
         564.6925048828125,
         718.8760375976562
       ],
-      "left_column_words": 384,
-      "right_column_words": 360,
+      "left_column_words": 379,
+      "right_column_words": 344,
       "first_text": "When Robustness Does Not Transfer:\nSpatial and Spectral Cues for Face Forgery Detection\nLucas Cunha, Lucas Sotomaior, Lucas Gasperin, Beatriz Caldas, Eduardo Pianovski, Rayson Laro",
-      "last_text": "valuation. The experiments do not establish robustness\nto all manipulations, causal explanations of the learned features,\nor state-of-the-art performance under unmatched published\n",
+      "last_text": "ked highly under a restricted train–test protocol may not\naddress a broader forgery space [5]. MFFI combines multiple\nforgery categories with heterogeneous authentic sources and a\n",
       "out_of_bounds": []
     },
     {
       "page": 2,
-      "words": 811,
+      "words": 817,
       "bounds_pt": [
-        48.9640007019043,
-        51.35444641113281,
-        564.8051147460938,
-        718.85205078125
+        48.40599822998047,
+        51.430381774902344,
+        564.774658203125,
+        718.8604736328125
       ],
-      "left_column_words": 414,
-      "right_column_words": 397,
-      "first_text": "protocols.\nII. RELATED WORK\nA. Benchmark design and the meaning of transfer\nDeepfakeBench identifies inconsistent preprocessing, exper-\nimental settings, and evaluation as obstacle",
-      "last_text": "aining\nexports contain 30 RGB rows, one for every family–seed\npair. We join the two collections by family and seed and\nseparately join the RGB standard runs to the seed-level DF40\n",
+      "left_column_words": 434,
+      "right_column_words": 383,
+      "first_text": "degraded test partition [4]. We use these works to distinguish an\nevaluation condition from a claim of universal generalization.\nIn particular, our local DF40 export is not equated",
+      "last_text": "eparate table rather than pool them with the recomputed\nprimary results. A five-member self-ensemble is one combined\npredictor, not five independent evaluations of that predictor.\n",
       "out_of_bounds": []
     },
     {
       "page": 3,
-      "words": 843,
+      "words": 827,
       "bounds_pt": [
         48.654998779296875,
-        51.30924606323242,
-        564.7745971679688,
+        51.177978515625,
+        564.7814331054688,
         718.85205078125
       ],
-      "left_column_words": 417,
-      "right_column_words": 426,
-      "first_text": "evaluation table. No seed is imputed, duplicated, or replaced\nafter examining its score.\nSeed 987 is not part of this primary comparison. Earlier\nrobust-training code constructs an",
-      "last_text": " seed-\nmatched regime comparison, not an exactly compute-matched\nor augmentation-only causal intervention. Resolved per-run\nconfigurations would be needed to establish the latter.\n",
+      "left_column_words": 377,
+      "right_column_words": 450,
+      "first_text": "C. Provenance and reproducibility boundary\nAll\nevidence\nis\nfrozen\nat\nsource\nrevision\nd156d7789728\n[8].\nThe\nanalysis\nverifies\nsource-file\nGit identities, checks the complete experim",
+      "last_text": "e- or video-cluster bootstrap for the full primary\nmatrix. We therefore report the direction of each paired change\nwithout converting the 30 pairs into independent replications of\n",
       "out_of_bounds": []
     },
     {
       "page": 4,
       "words": 791,
       "bounds_pt": [
-        48.49599838256836,
-        51.177978515625,
-        564.7804565429688,
+        48.654998779296875,
+        51.430381774902344,
+        564.029052734375,
         718.8760375976562
       ],
-      "left_column_words": 435,
-      "right_column_words": 356,
-      "first_text": "C. Metrics, paired differences, and uncertainty\nFor a system with fake-class score p(x), ROC AUC measures\nthe probability that a randomly selected fake receives a higher\nscore than",
-      "last_text": "ally in four of five seeds, despite having the\nlargest mean Test-D gain. Figure 1 places these differences on\nthe same scale without averaging them into a single robustness\nindex.\n",
+      "left_column_words": 440,
+      "right_column_words": 351,
+      "first_text": "a population-level hypothesis test. AUC also does not establish\ncalibration, precision at operational prevalence, or an acceptable\nfalse-positive rate at a particular decision thre",
+      "last_text": "71.23%\nversus 69.25%, while also improving its clean mean. These\ngains are smaller than the respective recorded gains from\nrobust RGB training, but they prevent the stronger claim\n",
       "out_of_bounds": []
     },
     {
       "page": 5,
-      "words": 826,
+      "words": 802,
       "bounds_pt": [
-        48.71500015258789,
+        48.60499954223633,
         52.865535736083984,
-        564.7825927734375,
-        718.8760375976562
+        564.7803955078125,
+        718.8640747070312
       ],
-      "left_column_words": 386,
-      "right_column_words": 430,
+      "left_column_words": 376,
+      "right_column_words": 416,
       "first_text": "TABLE II\nPRIMARY SEED-MATCHED RGB COMPARISON ON MFFI. EACH AUC CELL IS MEAN ± SAMPLE SD OVER S = {7, 42, 123, 2024, 2025}. THE LAST\nCOLUMN SUMMARIZES THE FIVE WITHIN-SEED ROBUST-MI",
-      "last_text": "aluation manifest are absent, we retain these values only as\nancillary reported results, not as an independently verified\ntransfer claim or a basis for selecting an ensemble. This\n",
+      "last_text": "preference that these experiments do not specify. An\noperating decision also needs calibrated thresholds, realistic\nclass prevalence, and the costs of false allegations and missed\n",
       "out_of_bounds": []
     },
     {
       "page": 6,
-      "words": 840,
+      "words": 830,
       "bounds_pt": [
-        48.60499954223633,
+        48.9640007019043,
         52.865535736083984,
-        564.2823486328125,
-        718.85205078125
+        564.7745361328125,
+        718.827880859375
       ],
-      "left_column_words": 382,
-      "right_column_words": 445,
+      "left_column_words": 392,
+      "right_column_words": 425,
       "first_text": "TABLE IV\nTHE COMPLETE STANDARD REPRESENTATION MATRIX: CLEAN-TEST / TEST-D MEAN AUC (%) OVER THE PRIMARY FIVE SEEDS. RGB+M CONCATENATES\nRGB AND FFT MAGNITUDE; HYBRID IS THE RELEASE’",
-      "last_text": "rs across a fixed detector roster can then identify\npersistent cases, with complete coverage and matched controls,\nrather than selected dramatic failures. These steps describe the\n",
+      "last_text": "egation rules, generated tables, and the vector\nfigure [8]. Its fixed seed population is separate from secondary\naggregates and qualitative illustrations. Original reports and the\n",
       "out_of_bounds": []
     },
     {
       "page": 7,
-      "words": 994,
+      "words": 863,
       "bounds_pt": [
-        48.654998779296875,
-        51.27926254272461,
+        48.60499954223633,
+        51.30924606323242,
         564.4550170898438,
-        718.827880859375
+        571.3216552734375
       ],
-      "left_column_words": 424,
-      "right_column_words": 570,
-      "first_text": "evidence needed to explain the detection results; they do not\nclaim that the explanation experiments have already established\na mechanism.\nC. Limits of the released experiment coll",
-      "last_text": "formation\nProcessing Systems, vol. 31, 2018.\n[16] F. Doshi-Velez and B. Kim, “Towards a rigorous science of interpretable\nmachine learning,” arXiv preprint arXiv:1702.08608, 2017.\n",
-      "out_of_bounds": []
-    },
-    {
-      "page": 8,
-      "words": 145,
-      "bounds_pt": [
-        48.96399688720703,
-        52.865535736083984,
-        301.34552001953125,
-        195.3316650390625
-      ],
-      "left_column_words": 145,
-      "right_column_words": 0,
-      "first_text": "[17] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image\nrecognition,” in Proceedings of the IEEE Conference on Computer Vision\nand Pattern Recognition, 2016, pp",
-      "last_text": "u, “Celeb-DF: A large-scale\nchallenging dataset for DeepFake forensics,” in Proceedings of the\nIEEE/CVF Conference on Computer Vision and Pattern Recognition,\n2020, pp. 3207–3216.\n",
+      "left_column_words": 331,
+      "right_column_words": 532,
+      "first_text": "preceding manuscript remain available; incompatible cohorts\nand unverified label corrections are not silently combined into\nnew empirical claims.\nNo new face images are synthesized",
+      "last_text": ". Sun, H. Qi, and S. Lyu, “Celeb-DF: A large-scale\nchallenging dataset for DeepFake forensics,” in Proc. IEEE/CVF Conf.\nComput. Vis. Pattern Recognit. (CVPR), 2020, pp. 3207–3216.\n",
       "out_of_bounds": []
     }
   ],
@@ -167,32 +152,32 @@
     {
       "name": "NimbusRomNo9L-Regu",
       "size": 10.06,
-      "characters": 11247
+      "characters": 11303
     },
     {
       "name": "NimbusRomNo9L-Regu",
       "size": 9.86,
-      "characters": 8378
+      "characters": 6815
     },
     {
       "name": "NimbusRomNo9L-Regu",
       "size": 9.96,
-      "characters": 2327
+      "characters": 2185
     },
     {
       "name": "NimbusRomNo9L-Regu",
       "size": 7.97,
-      "characters": 1717
-    },
-    {
-      "name": "NimbusRomNo9L-Regu",
-      "size": 7.89,
-      "characters": 1138
+      "characters": 1719
     },
     {
       "name": "NimbusRomNo9L-Regu",
       "size": 8.05,
-      "characters": 1010
+      "characters": 1056
+    },
+    {
+      "name": "NimbusRomNo9L-Regu",
+      "size": 7.89,
+      "characters": 809
     },
     {
       "name": "NimbusRomNo9L-Regu",
@@ -207,37 +192,27 @@
     {
       "name": "NimbusRomNo9L-Regu",
       "size": 10.05,
-      "characters": 664
+      "characters": 605
     },
     {
       "name": "NimbusRomNo9L-Regu",
-      "size": 9.92,
-      "characters": 638
-    },
-    {
-      "name": "NimbusRomNo9L-Regu",
-      "size": 9.98,
-      "characters": 590
+      "size": 9.89,
+      "characters": 585
     },
     {
       "name": "NimbusRomNo9L-Regu",
       "size": 9.97,
-      "characters": 548
+      "characters": 489
     },
     {
       "name": "NimbusRomNo9L-Regu",
       "size": 9.91,
-      "characters": 546
-    },
-    {
-      "name": "NimbusRomNo9L-Medi",
-      "size": 9.06,
-      "characters": 532
+      "characters": 483
     },
     {
       "name": "NimbusRomNo9L-Regu",
       "size": 10.02,
-      "characters": 484
+      "characters": 477
     },
     {
       "name": "NimbusRomNo9L-Regu",
@@ -246,8 +221,18 @@
     },
     {
       "name": "NimbusRomNo9L-Regu",
-      "size": 9.89,
-      "characters": 466
+      "size": 10.01,
+      "characters": 472
+    },
+    {
+      "name": "NimbusRomNo9L-Regu",
+      "size": 9.98,
+      "characters": 465
+    },
+    {
+      "name": "NimbusRomNo9L-Regu",
+      "size": 9.92,
+      "characters": 457
     },
     {
       "name": "CMR9",
@@ -261,8 +246,8 @@
     },
     {
       "name": "NimbusRomNo9L-Regu",
-      "size": 10.01,
-      "characters": 415
+      "size": 9.88,
+      "characters": 375
     },
     {
       "name": "NimbusRomNo9L-Medi",
@@ -270,23 +255,8 @@
       "characters": 371
     },
     {
-      "name": "NimbusRomNo9L-ReguItal",
-      "size": 7.97,
-      "characters": 352
-    },
-    {
       "name": "NimbusRomNo9L-Regu",
-      "size": 10.04,
-      "characters": 340
-    },
-    {
-      "name": "NimbusRomNo9L-Regu",
-      "size": 9.88,
-      "characters": 312
-    },
-    {
-      "name": "NimbusRomNo9L-ReguItal",
-      "size": 8.05,
+      "size": 9.93,
       "characters": 301
     },
     {
@@ -296,13 +266,23 @@
     },
     {
       "name": "NimbusRomNo9L-Regu",
-      "size": 9.87,
-      "characters": 297
+      "size": 9.99,
+      "characters": 294
+    },
+    {
+      "name": "NimbusRomNo9L-Medi",
+      "size": 9.06,
+      "characters": 293
     },
     {
       "name": "NimbusRomNo9L-Regu",
-      "size": 9.99,
-      "characters": 287
+      "size": 10.04,
+      "characters": 281
+    },
+    {
+      "name": "NimbusRomNo9L-ReguItal",
+      "size": 8.05,
+      "characters": 269
     },
     {
       "name": "NimbusRomNo9L-Regu",
@@ -311,8 +291,8 @@
     },
     {
       "name": "NimbusRomNo9L-Regu",
-      "size": 9.93,
-      "characters": 242
+      "size": 9.87,
+      "characters": 236
     },
     {
       "name": "CMR10",
@@ -321,8 +301,23 @@
     },
     {
       "name": "NimbusRomNo9L-ReguItal",
+      "size": 7.97,
+      "characters": 207
+    },
+    {
+      "name": "NimbusRomNo9L-Medi",
+      "size": 8.97,
+      "characters": 189
+    },
+    {
+      "name": "NimbusRomNo9L-Regu",
+      "size": 7.91,
+      "characters": 158
+    },
+    {
+      "name": "NimbusRomNo9L-ReguItal",
       "size": 7.89,
-      "characters": 191
+      "characters": 153
     },
     {
       "name": "CMR8",
@@ -331,12 +326,12 @@
     },
     {
       "name": "NimbusRomNo9L-Medi",
-      "size": 8.98,
-      "characters": 127
+      "size": 8.95,
+      "characters": 131
     },
     {
       "name": "NimbusRomNo9L-Regu",
-      "size": 8.03,
+      "size": 8.01,
       "characters": 127
     },
     {
@@ -350,11 +345,6 @@
       "characters": 125
     },
     {
-      "name": "NimbusRomNo9L-Medi",
-      "size": 9.04,
-      "characters": 124
-    },
-    {
       "name": "NimbusRomNo9L-Regu",
       "size": 9.95,
       "characters": 122
@@ -366,18 +356,13 @@
     },
     {
       "name": "NimbusRomNo9L-Regu",
-      "size": 9.9,
-      "characters": 118
-    },
-    {
-      "name": "NimbusRomNo9L-Regu",
-      "size": 7.94,
-      "characters": 115
-    },
-    {
-      "name": "NimbusRomNo9L-Regu",
       "size": 6.31,
       "characters": 113
+    },
+    {
+      "name": "NimbusRomNo9L-Regu",
+      "size": 7.92,
+      "characters": 109
     },
     {
       "name": "CMMI9",
@@ -390,19 +375,9 @@
       "characters": 108
     },
     {
-      "name": "NimbusRomNo9L-ReguItal",
-      "size": 7.94,
-      "characters": 102
-    },
-    {
       "name": "NimbusRomNo9L-Regu",
       "size": 6.33,
       "characters": 101
-    },
-    {
-      "name": "NimbusRomNo9L-Regu",
-      "size": 7.91,
-      "characters": 97
     },
     {
       "name": "NimbusRomNo9L-Regu",
@@ -410,24 +385,19 @@
       "characters": 94
     },
     {
-      "name": "NimbusRomNo9L-Medi",
-      "size": 8.97,
-      "characters": 92
-    },
-    {
       "name": "DejaVuSans",
       "size": 8.02,
-      "characters": 88
+      "characters": 89
+    },
+    {
+      "name": "NimbusRomNo9L-Regu",
+      "size": 7.96,
+      "characters": 87
     },
     {
       "name": "NimbusRomNo9L-ReguItal",
-      "size": 7.92,
+      "size": 8.01,
       "characters": 83
-    },
-    {
-      "name": "NimbusRomNo9L-ReguItal",
-      "size": 8.03,
-      "characters": 76
     },
     {
       "name": "CMMI10",
@@ -445,6 +415,11 @@
       "characters": 72
     },
     {
+      "name": "NimbusRomNo9L-Regu",
+      "size": 7.99,
+      "characters": 70
+    },
+    {
       "name": "NimbusRomNo9L-Medi",
       "size": 8.89,
       "characters": 66
@@ -455,9 +430,9 @@
       "characters": 65
     },
     {
-      "name": "NimbusRomNo9L-Regu",
-      "size": 7.96,
-      "characters": 65
+      "name": "NimbusRomNo9L-Medi",
+      "size": 9.04,
+      "characters": 63
     },
     {
       "name": "NimbusRomNo9L-ReguItal",
@@ -465,13 +440,18 @@
       "characters": 62
     },
     {
-      "name": "NimbusRomNo9L-ReguItal",
-      "size": 8.04,
-      "characters": 62
+      "name": "NimbusRomNo9L-Medi",
+      "size": 9.02,
+      "characters": 61
     },
     {
       "name": "NimbusRomNo9L-Medi",
-      "size": 9.02,
+      "size": 8.98,
+      "characters": 61
+    },
+    {
+      "name": "NimbusRomNo9L-Regu",
+      "size": 9.9,
       "characters": 61
     },
     {
@@ -496,8 +476,8 @@
     },
     {
       "name": "NimbusRomNo9L-Regu",
-      "size": 7.92,
-      "characters": 55
+      "size": 8.03,
+      "characters": 58
     },
     {
       "name": "NimbusRomNo9L-Regu",
@@ -510,13 +490,28 @@
       "characters": 52
     },
     {
+      "name": "NimbusRomNo9L-ReguItal",
+      "size": 7.96,
+      "characters": 52
+    },
+    {
       "name": "NimbusRomNo9L-Regu",
-      "size": 7.99,
-      "characters": 40
+      "size": 7.9,
+      "characters": 51
+    },
+    {
+      "name": "NimbusRomNo9L-Regu",
+      "size": 8.02,
+      "characters": 45
     },
     {
       "name": "CMSY8",
       "size": 7.97,
+      "characters": 37
+    },
+    {
+      "name": "NimbusRomNo9L-ReguItal",
+      "size": 7.92,
       "characters": 37
     },
     {
@@ -530,11 +525,6 @@
       "characters": 34
     },
     {
-      "name": "NimbusRomNo9L-ReguItal",
-      "size": 7.99,
-      "characters": 28
-    },
-    {
       "name": "CMMI7",
       "size": 6.97,
       "characters": 27
@@ -543,6 +533,16 @@
       "name": "NimbusRomNo9L-ReguItal",
       "size": 9.92,
       "characters": 25
+    },
+    {
+      "name": "NimbusRomNo9L-ReguItal",
+      "size": 8.02,
+      "characters": 24
+    },
+    {
+      "name": "NimbusRomNo9L-ReguItal",
+      "size": 7.9,
+      "characters": 21
     },
     {
       "name": "NimbusRomNo9L-ReguItal",
@@ -570,13 +570,23 @@
       "characters": 11
     },
     {
+      "name": "NimbusRomNo9L-ReguItal",
+      "size": 7.91,
+      "characters": 11
+    },
+    {
       "name": "NimbusRomNo9L-MediItal",
       "size": 9.06,
       "characters": 8
     },
     {
+      "name": "NimbusRomNo9L-Regu",
+      "size": 7.94,
+      "characters": 8
+    },
+    {
       "name": "NimbusRomNo9L-ReguItal",
-      "size": 7.96,
+      "size": 8.03,
       "characters": 7
     },
     {
@@ -598,11 +608,6 @@
       "name": "CMEX10",
       "size": 9.96,
       "characters": 3
-    },
-    {
-      "name": "NimbusRomNo9L-Regu",
-      "size": 8.04,
-      "characters": 2
     }
   ],
   "source_evidence": {
