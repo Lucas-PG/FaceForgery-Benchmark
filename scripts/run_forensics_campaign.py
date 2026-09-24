@@ -362,6 +362,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--batch-size", type=int, default=64, help="Batch size (padrão: 64)")
     parser.add_argument("--num-workers", type=int, default=8, help="DataLoader workers (padrão: 8)")
     parser.add_argument("--early-stop-patience", type=int, default=5, help="Paciência early stopping (padrão: 5)")
+    parser.add_argument("--data-limit", type=int, default=None, help="Limite de amostras para depuração rápida")
     parser.add_argument("--force", action="store_true", help="Forçar retreino")
     args = parser.parse_args(argv)
 
@@ -378,9 +379,14 @@ def main(argv: Sequence[str] | None = None) -> None:
     print("█" * 80, flush=True)
 
     all_results = []
-    for fam in families:
-        fam_results = []
-        for seed in seeds:
+    for seed in seeds:
+        print("\n" + "=" * 80)
+        print(f"  🌟 INICIANDO CICLO DA SEED {seed} PARA TODOS OS MODELOS ({mode.upper()})")
+        print(f"  Ordem: {families}")
+        print("=" * 80, flush=True)
+
+        seed_results = []
+        for fam in families:
             res = train_single_seed(
                 family=fam,
                 seed=seed,
@@ -390,22 +396,30 @@ def main(argv: Sequence[str] | None = None) -> None:
                 batch_size=args.batch_size,
                 num_workers=args.num_workers,
                 early_stop_patience=args.early_stop_patience,
+                data_limit=args.data_limit,
                 device=device,
                 force=args.force,
             )
-            fam_results.append(res)
+            seed_results.append(res)
             all_results.append(res)
 
-        df_fam = pd.DataFrame(fam_results)
-        summary_dir = models_root() / fam / mode / "finetune_robust"
-        summary_dir.mkdir(parents=True, exist_ok=True)
-        df_fam.to_csv(summary_dir / f"summary_5seeds_{fam}_{mode}.csv", index=False)
+            # Grava progresso incremental a cada modelo finalizado
+            df_current = pd.DataFrame(all_results)
+            progress_table = output_root() / "tables" / f"campaign_results_{mode}_progress.csv"
+            progress_table.parent.mkdir(parents=True, exist_ok=True)
+            df_current.to_csv(progress_table, index=False)
+
+        # Salva o resumo de todos os modelos para esta seed específica
+        df_seed = pd.DataFrame(seed_results)
+        seed_table = output_root() / "tables" / f"campaign_results_{mode}_seed_{seed}.csv"
+        df_seed.to_csv(seed_table, index=False)
+        print(f"\n[✓] Ciclo completo da Seed {seed} finalizado! Tabela salva em: {seed_table}\n", flush=True)
 
     df_all = pd.DataFrame(all_results)
     out_table = output_root() / "tables" / f"campaign_results_{mode}_5seeds.csv"
     out_table.parent.mkdir(parents=True, exist_ok=True)
     df_all.to_csv(out_table, index=False)
-    print(f"\n[✓] Campanha finalizada com sucesso! Relatório salvo em: {out_table}", flush=True)
+    print(f"\n[✓] Campanha finalizada com sucesso! Relatório completo salvo em: {out_table}", flush=True)
 
 
 if __name__ == "__main__":
