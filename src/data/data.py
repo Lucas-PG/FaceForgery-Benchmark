@@ -1,7 +1,10 @@
 from torch.utils.data import Dataset
 import pandas as pd
-from PIL import Image
+from PIL import Image, ImageFile
 import numpy as np
+
+# Permite que o PIL carregue imagens JPEG ligeiramente truncadas no disco sem falhar
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 from pathlib import Path
 from torchvision import transforms
 import os
