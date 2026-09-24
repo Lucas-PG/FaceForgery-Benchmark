@@ -20,6 +20,8 @@ FourierMode = Literal[
     "concat",  # RGB (3) + magnitude FFT normalizada (1) empilhados; 4 canais.
     "frequency_3",  # Magnitude FFT com máscara passa-alta (enfatiza altas frequências); 1 canal.
     "concat_frequency",  # RGB (3) + magnitude + fase + passa-alta (3×1 canal); 6 canais.
+    "srm",  # RGB (3) + 3 resíduos de ruído SRM de esteganálise; 6 canais.
+    "dtcwt",  # RGB (3) + 6 sub-bandas direcionais DTCWT (±15°, ±45°, ±75°); 9 canais.
 ]
 
 # Ordem fixa para benchmarks (sem nomes duplicados para o mesmo tensor).
@@ -31,12 +33,15 @@ ALL_FOURIER_MODES: tuple[FourierMode, ...] = (
     "concat",
     "frequency_3",
     "concat_frequency",
+    "srm",
+    "dtcwt",
 )
 
 
 FOURIER_CHANNELS = {
     "none": 3, "magnitude": 1, "phase": 1, "complex": 2,
     "concat": 4, "frequency_3": 1, "concat_frequency": 7,
+    "srm": 6, "dtcwt": 9,
 }
 
 
@@ -67,6 +72,15 @@ def encode_pil_image(img: Image.Image, fourier: FourierMode, image_size: int) ->
     lowpass = channel(np.log1p(np.abs(spectrum) * (dist2 < r2)))
     scale = max(float(np.abs(spectrum).max()), 1e-8)
     complex_value = torch.from_numpy(np.stack((spectrum.real/scale, spectrum.imag/scale)).astype(np.float32))
+    if fourier == "srm":
+        from src.forensics.srm import extract_srm_residuals
+        srm_res = extract_srm_residuals(rgb.unsqueeze(0))[0]
+        return torch.cat([rgb, srm_res], dim=0)
+    elif fourier == "dtcwt":
+        from src.forensics.dtcwt_module import extract_dtcwt_features
+        dtcwt_bands = extract_dtcwt_features(rgb.unsqueeze(0), mode="directional_only")[0]
+        return torch.cat([rgb, dtcwt_bands], dim=0)
+
     values = {
         "none": rgb, "magnitude": magnitude, "phase": phase, "complex": complex_value,
         "concat": torch.cat((rgb, magnitude)), "frequency_3": highpass,
@@ -225,6 +239,20 @@ class ImageDataset(Dataset):
                 dim=0,
             )
             output = torch.cat([image, fft], dim=0)
+            if self.in_channels is not None:
+                output = output[:self.in_channels]
+
+        elif self.fourier == "srm":
+            from src.forensics.srm import extract_srm_residuals
+            srm_res = extract_srm_residuals(image.unsqueeze(0))[0]
+            output = torch.cat([image, srm_res], dim=0)
+            if self.in_channels is not None:
+                output = output[:self.in_channels]
+
+        elif self.fourier == "dtcwt":
+            from src.forensics.dtcwt_module import extract_dtcwt_features
+            dtcwt_bands = extract_dtcwt_features(image.unsqueeze(0), mode="directional_only")[0]
+            output = torch.cat([image, dtcwt_bands], dim=0)
             if self.in_channels is not None:
                 output = output[:self.in_channels]
 

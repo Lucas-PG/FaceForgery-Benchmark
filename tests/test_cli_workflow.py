@@ -55,7 +55,7 @@ def test_end_to_end_smoke_workflow(tiny_phase1_dataset, tmp_path, monkeypatch):
 def test_matrix_expands_explicit_six_families_seven_modes_three_seeds():
     seeds = [42, 123, 2024]
     tasks = build_tasks("scratch", force=True, seeds=seeds)
-    assert len(tasks) == 126
+    assert len(tasks) == len(FAMILIES) * len(ALL_FOURIER_MODES) * len(seeds)
     assert {task["kwargs"]["seed"] for task in tasks} == set(seeds)
 
 
