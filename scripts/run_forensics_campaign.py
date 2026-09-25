@@ -196,6 +196,25 @@ def eval_celeb_df(
     return celeb_metrics
 
 
+def is_lock_active(lock_file: Path) -> bool:
+    if not lock_file.exists():
+        return False
+    try:
+        content = lock_file.read_text().strip()
+        for part in content.split(","):
+            if part.startswith("pid="):
+                pid = int(part.split("=")[1])
+                os.kill(pid, 0)
+                return True
+    except (OSError, ValueError):
+        try:
+            lock_file.unlink(missing_ok=True)
+        except Exception:
+            pass
+        return False
+    return False
+
+
 def train_single_seed(
     family: str,
     seed: int,
@@ -227,8 +246,8 @@ def train_single_seed(
         }
 
     lock_file = output_dir / ".training_lock"
-    if not force and lock_file.exists():
-        print(f"🔒 Seed {seed} ({family.upper()} / {fourier_mode}) está sendo executada por outro processo. Pulando...", flush=True)
+    if not force and is_lock_active(lock_file):
+        print(f"🔒 Seed {seed} ({family.upper()} / {fourier_mode}) está sendo executada por outro processo ativo. Pulando...", flush=True)
         return None
 
     output_dir.mkdir(parents=True, exist_ok=True)

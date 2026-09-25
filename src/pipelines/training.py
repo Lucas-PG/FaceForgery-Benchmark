@@ -261,8 +261,7 @@ class Trainer:
                 f"| Best Score: {best_score:.4f} (stale={stale})",
                 flush=True,
             )
-
-        _safe_torch_save(model_state_dict(self.model), self.output_dir / "weights" / "final.pth")
+        # Apenas best.pth é mantido como checkpoint final oficial
         unwrap_model(self.model).load_state_dict(torch.load(
             self.output_dir / "weights" / "best.pth", map_location=self.device, weights_only=True,
         ))
