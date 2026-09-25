@@ -226,7 +226,13 @@ def train_single_seed(
             "elapsed_min": 0.0, "cached": True,
         }
 
+    lock_file = output_dir / ".training_lock"
+    if not force and lock_file.exists():
+        print(f"🔒 Seed {seed} ({family.upper()} / {fourier_mode}) está sendo executada por outro processo. Pulando...", flush=True)
+        return None
+
     output_dir.mkdir(parents=True, exist_ok=True)
+    lock_file.write_text(f"pid={os.getpid()},device={device},time={time.time()}")
     print(f"\n{'='*75}")
     print(f"🚀 INICIANDO TREINO FORENSE: {family.upper()} | Modo: {fourier_mode.upper()} | Seed: {seed}")
     print(f"   Dispositivo: {device} | Diretório: {output_dir}")
@@ -350,6 +356,11 @@ def train_single_seed(
     if result["celeb_video_auc"]:
         print(f"   • Celeb-DF Video:  {result['celeb_video_auc']*100:.2f}%")
     print(f"   • Tempo:           {elapsed_min} min", flush=True)
+    if lock_file.exists():
+        try:
+            lock_file.unlink()
+        except Exception:
+            pass
 
     return result
 
@@ -402,8 +413,9 @@ def main(argv: Sequence[str] | None = None) -> None:
                 device=device,
                 force=args.force,
             )
-            seed_results.append(res)
-            all_results.append(res)
+            if res is not None:
+                seed_results.append(res)
+                all_results.append(res)
 
             # Grava progresso incremental a cada modelo finalizado
             df_current = pd.DataFrame(all_results)
