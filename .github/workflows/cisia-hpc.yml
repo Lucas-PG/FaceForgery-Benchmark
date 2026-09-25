@@ -1,0 +1,36 @@
+name: CISIA HPC checks
+
+on:
+  push:
+    branches: [fix/cisia-hpc-readiness]
+  pull_request:
+    branches: [ICLR]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cisia-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile Python sources
+        run: python -m compileall -q src scripts train.py run_matrix.py
+      - name: Package review sources
+        run: |
+          git ls-files -z '*.py' '*.sh' '*.yaml' '*.yml' '*.toml' '*.md' '.gitignore' > /tmp/cisia-files
+          tar --null -T /tmp/cisia-files -czf /tmp/cisia-source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cisia-review-source
+          path: /tmp/cisia-source.tar.gz
+          retention-days: 3
