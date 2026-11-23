@@ -6,6 +6,7 @@ import torch
 from PIL import Image
 
 from .external import GenD, LipForensics, external_assets
+from .initial import verify_initial
 from .models import build_model, validate_assets, video_logits
 
 
@@ -35,6 +36,8 @@ def probe(cfg):
                     )
             else:
                 validate_assets(spec)
+                if kind != "tiny" and not historical:
+                    verify_initial(kind, spec["weights"])
                 settings = {**cfg["training"], **spec.get("training", {})}
                 model = build_model(spec, settings).eval()
                 size = cfg["data"]["size"]

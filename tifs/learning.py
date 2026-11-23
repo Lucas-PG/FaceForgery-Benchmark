@@ -319,7 +319,7 @@ def _fit(model, train_rows, seed, spec, settings, run_dir, signature, floor, dev
         _authority(run_dir / "training_history.json", history)
         elapsed = time.monotonic() - started
         print(
-            f"{spec['name']} seed={seed} epoch={epoch + 1}/{epochs} "
+            f"{spec.get('name', spec['backbone'])} seed={seed} epoch={epoch + 1}/{epochs} "
             f"updates={len(loader)} loss={history[-1]['mean_loss']:.5f} "
             f"frame_views={exposure} seconds={elapsed:.1f} frame_views/s={exposure / elapsed:.1f}",
             flush=True,

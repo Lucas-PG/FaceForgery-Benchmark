@@ -39,10 +39,11 @@ python -m tifs.importers propose-tracks --config "$CFG" --splits test --per-clas
 python -m tifs.importers finalize-tracks --folder "$TIFS_INVENTORY/tracked"
 ```
 
-3. Supply the initialization snapshots produced by `scripts/setup_pretrained_cisia.py` (headless DINO and the CLIP vision-only directory). Adjust `PRETRAIN` to their shared location. The asset command downloads both seed-42 historical detectors and their original configurations from the authors' pinned release. To reuse identical archived files instead, pass optional `--dino-tcc` and `--clip-tcc` paths with their sibling `results/run_config.json` present. The published configurations use the generic regime name `finetune`; their pinned weights, configurations and original campaign records identify the robust runs. Run acquisition where network access is available. Heavy backbone preparation belongs in an allocation. [Authors’ released models](https://huggingface.co/lucasoc/MFFI-Models/tree/b408d7572fcc04638ce20adee0546471d46dce2a)
+3. Provision the registered DINO and CLIP initialization tensors with the command below. A previously staged headless DINO and CLIP vision-only directory can also be used by pointing `PRETRAIN` at their root. The asset step verifies tensor identity even when serialization or a historical CLIP namespace differs. The asset command downloads both seed-42 historical detectors and their original configurations from the authors' pinned release. To reuse identical archived files instead, pass optional `--dino-tcc` and `--clip-tcc` paths with their sibling `results/run_config.json` present. The published configurations use the generic regime name `finetune`; their pinned weights, configurations and original campaign records identify the robust runs. Run acquisition where network access is available. Heavy backbone preparation belongs in an allocation. [Authors’ released models](https://huggingface.co/lucasoc/MFFI-Models/tree/b408d7572fcc04638ce20adee0546471d46dce2a)
 
 ```bash
-PRETRAIN=/datasets/ai_models/faceforgery/pretrained
+PRETRAIN="$TIFS_ASSETS/initial"
+python -m tifs.initial --out "$PRETRAIN"
 gdown 1wfZnxZpyNd5ouJs0LjVls7zU0N_W73L7 -O "$TIFS_ASSETS/lipforensics.pth"
 curl -fL --retry 3 https://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2 \
   -o "$TIFS_ASSETS/shape_predictor_68_face_landmarks.dat.bz2"

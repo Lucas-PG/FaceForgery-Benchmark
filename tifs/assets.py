@@ -4,7 +4,8 @@ import argparse
 import subprocess
 from pathlib import Path
 
-from .external import GEND_REV, LIP_REV, check_repo
+from .external import GEND_REV, LIP_REV, RELEASE_HASHES, check_repo
+from .initial import verify_initial
 from .io import sha, write_json
 from .models import HISTORICAL_REPO, HISTORICAL_REVISION, validate_assets
 
@@ -24,6 +25,15 @@ def bind(item, key, file, checksum_file=None):
     p = Path(file).resolve(strict=True)
     item[key] = str(p)
     item[key + "_sha256"] = sha(checksum_file if checksum_file else p)
+
+
+def staged_file(repo, name, revision, directory):
+    existing = directory / name
+    if existing.is_file():
+        return existing
+    from huggingface_hub import hf_hub_download
+
+    return Path(hf_hub_download(repo, name, revision=revision, local_dir=directory))
 
 
 def main():
@@ -49,8 +59,6 @@ def main():
     args = p.parse_args()
     root = args.directory.resolve()
     root.mkdir(parents=True, exist_ok=True)
-    from huggingface_hub import hf_hub_download
-
     registry = {}
     for name, key, file, checksum in [
         ("dino-init", "weights", args.dino_initial, None),
@@ -63,18 +71,17 @@ def main():
     ]:
         registry[name] = {}
         bind(registry[name], key, file, checksum)
+        verify_initial(name.split("-")[0], file)
     for family, file in (("dino", args.dino_tcc), ("clip", args.clip_tcc)):
         if file is None:
             subdir = f"{family}/none/finetune_robust/seed_42"
 
             file, run_config = (
-                Path(
-                    hf_hub_download(
-                        HISTORICAL_REPO,
-                        f"{subdir}/{suffix}",
-                        revision=HISTORICAL_REVISION,
-                        local_dir=root / "mffi-models",
-                    )
+                staged_file(
+                    HISTORICAL_REPO,
+                    f"{subdir}/{suffix}",
+                    HISTORICAL_REVISION,
+                    root / "mffi-models",
                 )
                 for suffix in ("weights/best.pth", "results/run_config.json")
             )
@@ -122,9 +129,7 @@ def main():
             "clip-large",
         ),
     ):
-        bind(
-            gen, key, hf_hub_download(repo, name, revision=rev, local_dir=root / folder)
-        )
+        bind(gen, key, staged_file(repo, name, rev, root / folder))
     lip = registry["lip"] = {
         "upstream": checkout(
             root,
@@ -135,6 +140,10 @@ def main():
     }
     bind(lip, "weights", args.lip_weights)
     bind(lip, "landmarks", args.landmarks)
+    for kind, spec in (("gend", gen), ("lipforensics", lip)):
+        for key, expected in RELEASE_HASHES[kind].items():
+            if spec[key + "_sha256"] != expected:
+                raise ValueError(f"Wrong public release for {kind}/{key}")
     write_json(root / "assets.json", registry)
     print(root / "assets.json")
 
