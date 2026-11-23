@@ -1,0 +1,92 @@
+version: 1
+mode: confirmatory
+output: ${TIFS_OUTPUT}
+asset_registry: ${TIFS_ASSETS}/assets.json
+seeds: [42, 123, 2024]
+data:
+  sources: ${TIFS_INVENTORY}/sources.csv
+  renditions: ${TIFS_INVENTORY}/renditions.csv
+  cache_dir: ${TIFS_CACHE}
+  frames: 8
+  size: 224
+  crop: detected
+  window_seconds: 4.0
+  prepare_workers: 4
+  require_identity_splits: [train, dev, cal, diagnostic, test]
+  routes:
+    native: {kind: native}
+    codec: {kind: encode, crf: 28, preset: medium}
+    resize: {kind: encode, crf: 24, height: 360, preset: medium}
+    network: {kind: measured}
+    redistribution: {kind: measured}
+  routes_by_split:
+    train: &source [native, codec, resize]
+    dev: &calibration [native, codec, resize, network]
+    cal: *calibration
+    diagnostic: &external [native, network, redistribution]
+    test: *external
+training:
+  train_routes: *source
+  epochs: 8
+  batch_size: 40
+  activation_checkpoint: true
+  frame_batch: 8
+  shuffle_quantiles: [native_duration_seconds, quality]
+  train_frames: 4
+  learning_rate: 0.0002
+  backbone_lr: 0.00002
+  unfreeze_blocks: 1
+  workers: 4
+  amp: true
+  device: cuda
+  deterministic: true
+  alpha: 0.05
+  clean_margin: 0.02
+  clean_reference: '../{backbone}-clean__s{seed}/predictions.csv'
+  inference_batch: 4
+  temperature: 0.3
+  dual_initial: 1.0
+  dual_lr: 0.1
+  dual_max: 50
+  bce_anchor: 0.2
+  max_grad_norm: 5
+  weight_decay: 0.01
+  dropout: 0.1
+models:
+  - {name: dino-clean, backbone: dino, assets: dino-init, objective: clean}
+  - {name: clip-clean, backbone: clip, assets: clip-init, objective: clean}
+  - {name: dino-aug, backbone: dino, assets: dino-init, objective: augmented}
+  - {name: dino-maxup, backbone: dino, assets: dino-init, objective: worst_view}
+  - {name: dino-pauc, backbone: dino, assets: dino-init, objective: partial_auc}
+  - {name: dino-paired, backbone: dino, assets: dino-init, objective: constrained}
+  - {name: dino-shuffled, backbone: dino, assets: dino-init, objective: shuffled}
+  - {name: dino-per-channel, backbone: dino, assets: dino-init, objective: per_channel}
+  - {name: dino-no-clean, backbone: dino, assets: dino-init, objective: no_clean}
+  - {name: clip-aug, backbone: clip, assets: clip-init, objective: augmented}
+  - {name: clip-maxup, backbone: clip, assets: clip-init, objective: worst_view}
+  - {name: clip-paired, backbone: clip, assets: clip-init, objective: constrained}
+  - {name: clip-shuffled, backbone: clip, assets: clip-init, objective: shuffled}
+  - {name: tcc-dino, backbone: dino, assets: dino-tcc, objective: frozen, positive_index: 1, seeds: [42]}
+  - {name: tcc-clip, backbone: clip, assets: clip-tcc, objective: frozen, positive_index: 1, seeds: [42]}
+  - {name: gend, backbone: gend, assets: gend, objective: frozen, seeds: [42]}
+  - {name: lip, backbone: lipforensics, assets: lip, objective: frozen, clips: 4, seeds: [42]}
+crop_diagnostic:
+  sources: ${TIFS_INVENTORY}/tracked/sources.csv
+  renditions: ${TIFS_INVENTORY}/tracked/renditions.csv
+  splits: [test]
+analysis:
+  cohorts: [dfdc, kodf]
+  heldout_families: {kodf: [fsgan]}
+  primary_run: dino-paired__s42
+  baseline_run: dino-aug__s42
+  shuffled_run: dino-shuffled__s42
+  clean_run: dino-clean__s42
+  control_runs: [dino-maxup__s42, dino-pauc__s42]
+  selection_runs: [dino-clean__s42, dino-aug__s42, dino-paired__s42, dino-maxup__s42, clip-aug__s42, clip-paired__s42, tcc-dino__s42, tcc-clip__s42, gend__s42, lip__s42]
+  replications: [{primary_run: clip-paired__s42, baseline_run: clip-aug__s42, shuffled_run: clip-shuffled__s42, clean_run: clip-clean__s42}]
+  alpha: 0.05
+  source_alpha: 0.03
+  confidence: 0.95
+  clean_margin: 0.02
+  gain_margin: 0.05
+  bootstrap: 1000

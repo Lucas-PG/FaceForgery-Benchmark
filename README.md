@@ -1,5 +1,7 @@
 # FaceForgery Benchmark — TCC
 
+**IEEE TIFS research branch.** Start with [the paired-video study](RESEARCH_OVERVIEW.md) and [the server runbook](docs/tifs_runbook.md). The TCC documentation and results follow.
+
 **Além do Conjunto Limpo: Resíduos de Ruído, Treinamento Robusto e Generalização entre Bases na Detecção de Faces Manipuladas**
 
 Código do TCC (PUCPR) que estende o benchmark do artigo SIBGRAPI 2026
